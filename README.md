@@ -86,6 +86,36 @@ graph LR
 
 > The system evolves patterns through iterative stabilization, constraint-based selection, and trajectory-aware modulation. Feedback loops allow both refinement (via failure signals) and future-oriented bias (via optionality preservation), creating a self-conditioning dynamical field.
 
+
+---
+
+## ⚡ Quick demo (2 minutes)
+
+If you want an immediate, runnable intuition for the FXSO idea:
+
+```bash
+python fxso_toy.py
+
+This runs a minimal field-coupling simulation where:
+
+- agents evolve via internal loops (rotation)
+- interact via proximity-based overlap (no message passing)
+- operate under noise (field entropy)
+
+You will observe three regimes:
+
+- Drift — no interaction (coupling too low)
+- Coherence — structured alignment emerges (target regime)
+- Collapse — agents merge into a single point (coupling too high)
+
+The interesting result is the middle:
+
+structured coordination emerges purely from overlap dynamics — no explicit communication.
+
+This is the simplest instantiation of the FXSO hypothesis.
+
+See fxso_toy.py for details.
+
 ---
 
 ## Why open-source this
