@@ -97,6 +97,8 @@ If you want an immediate, runnable intuition for the FXSO idea:
 python fxso_toy.py
 ```
 
+_Requires: numpy (matplotlib optional for plots)_
+
 This runs a minimal field-coupling simulation where:
 
 - agents evolve via internal loops (rotation)
@@ -105,9 +107,9 @@ This runs a minimal field-coupling simulation where:
 
 You will observe three regimes:
 
-- Drift — no interaction (coupling too low)
-- Coherence — structured alignment emerges (target regime)
-- Collapse — agents merge into a single point (coupling too high)
+- **Drift** — no interaction (coupling too low)
+- **Coherence** — structured alignment emerges (target regime)
+- **Collapse** — agents merge into a single point (coupling too high)
 
 The interesting result is the middle:
 
@@ -116,6 +118,8 @@ structured coordination emerges purely from overlap dynamics — no explicit com
 This is the simplest instantiation of the FXSO hypothesis.
 
 See fxso_toy.py for details.
+
+_If matplotlib is installed, a visualization (`fxso_regimes.png`) will be generated._
 
 ---
 
