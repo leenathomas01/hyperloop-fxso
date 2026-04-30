@@ -182,7 +182,7 @@ This is not a synchronization model; agents are not forced into identical states
 
 **Interpretation:** If coherence emerges in a specific parameter regime, it supports the claim that field-based interaction can produce structured coordination without message passing. If not, it suggests overlap alone is insufficient and additional mechanisms (constraints, loops, anisotropy) are required — which is itself a useful result.
 
-**Implementation:** See `07_experiments/fxso_toy.py` for a runnable starting point.
+**Implementation:** See `fxso_toy.py` for a runnable starting point.
 
 ```python
 import numpy as np
