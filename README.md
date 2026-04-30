@@ -121,6 +121,8 @@ See fxso_toy.py for details.
 
 _If matplotlib is installed, a visualization (`fxso_regimes.png`) will be generated._
 
+![FXSO regimes](./fxso_regimes_v2.png)
+
 ---
 
 ## Why open-source this
@@ -142,7 +144,7 @@ All of those outcomes are fine.
 | `05_open_questions/` | What remains unresolved, explicitly flagged |
 | `06_nuggets/` | Compressed, portable ideas — the reusable units |
 | `07_experiments/` | 6 minimal, concrete experiments to probe the key claims |
-| `fxso_toy.py/` | immediate, runnable intuition for the FXSO idea |
+| `fxso_toy.py/` | Immediate, runnable intuition for the FXSO idea |
 
 Start with `01_foundations` if you want to follow the derivation. Start with `03_framework` if you want the conclusions first. Start with `06_nuggets` if you want the portable ideas without the journey. Start with `07_experiments` if you want to test something immediately.
 
