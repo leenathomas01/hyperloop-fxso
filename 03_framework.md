@@ -23,6 +23,8 @@ No explicit judge. No reward signal. No labeled data. Selection emerges from phy
 
 ## The 7-layer stack
 
+![Hyperloop-fxso-concept](./hyperloop-fxso.png)
+
 ### Layer 1 — Generation (diffusion)
 
 Patterns spread through overlapping trajectory manifolds. Influence propagates not via discrete message passing but through partial alignment of internal state trajectories.
