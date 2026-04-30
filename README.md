@@ -84,7 +84,7 @@ graph LR
     style Forward_Selection fill:#e3ebf5,stroke:#999,stroke-dasharray: 5 5
 ```
 
-> The system evolves patterns through iterative stabilization, constraint-based selection, and trajectory-aware modulation. Feedback loops allow both refinement (via failure signals) and future-oriented bias (via optionality preservation), creating a self-conditioning dynamical field.
+> The system evolves patterns through iterative stabilization, constraint-based selection, and trajectory-aware modulation. Feedback loops allow both refinement (via failure signals) and future-oriented bias (via optionality preservation), creating a self-conditioning dynamical field. This is not a training-based system — structure emerges from interaction, not optimization.
 
 
 ---
@@ -141,7 +141,8 @@ All of those outcomes are fine.
 | `04_process/` | Key turning points in the exploration, annotated |
 | `05_open_questions/` | What remains unresolved, explicitly flagged |
 | `06_nuggets/` | Compressed, portable ideas — the reusable units |
-| `07_experiments/` | 5 minimal, concrete experiments to probe the key claims |
+| `07_experiments/` | 6 minimal, concrete experiments to probe the key claims |
+| `fxso_toy.py/` | immediate, runnable intuition for the FXSO idea |
 
 Start with `01_foundations` if you want to follow the derivation. Start with `03_framework` if you want the conclusions first. Start with `06_nuggets` if you want the portable ideas without the journey. Start with `07_experiments` if you want to test something immediately.
 
