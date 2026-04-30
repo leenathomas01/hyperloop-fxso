@@ -151,6 +151,8 @@ Each experiment is designed to probe one specific claim. Falsification is as use
 
 **Hypothesis:** Agents interacting via simple overlap-based coupling — with no explicit message passing — can self-organize into coherent shared trajectories under noise and internal dynamics. Coherence is a function of coupling strength relative to noise, not of any pre-programmed coordination.
 
+This is not a synchronization model; agents are not forced into identical states, but may form structured, partially aligned trajectories.
+
 **What this tests:** A minimal instantiation of the FXSO hypothesis: that coupling via shared state space is sufficient to produce coordinated structure without discrete communication. This bridges Experiment 2 (propagation regimes) and Experiment 6 (self-refinement) — it is the most visceral, visualizable entry point in the set. If coherence does not emerge from overlap alone, the field-coupling framing needs additional mechanisms before it can support the rest of the framework.
 
 **Setup:**
