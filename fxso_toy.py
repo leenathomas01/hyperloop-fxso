@@ -4,6 +4,11 @@ fxso_toy.py — Minimal FXSO Field-Coupling Simulation
 Tests whether field-based coupling (overlap-driven, no explicit message passing)
 can produce emergent coherence in a population of agents with internal loop dynamics.
 
+Three key design choices that make the regimes visible:
+  1. Localized decay: exp(-k * distance^2) — only close agents couple strongly
+  2. Normalized pull — prevents instability at higher coupling strengths
+  3. No self-interaction — each agent couples only to others
+
 Corresponds to Experiment 5 in 07_experiments/minimal_experiments.md
 
 Requirements: numpy, matplotlib (optional)
@@ -20,13 +25,13 @@ except ImportError:
     print("matplotlib not found — running in text-only mode")
 
 
-def run_fxso_toy(agents=5, steps=500, coupling=0.02, noise=0.01):
+def run_fxso_toy(agents=30, steps=600, coupling=0.05, noise=0.08):
     """
     Minimal FXSO field-coupling simulation.
 
     Each agent is a 2D vector evolving under:
       1. An internal rotation (proxy for Hyperloop loop iterations)
-      2. Proximity-weighted coupling toward other agents (field overlap)
+      2. Localized, normalized coupling toward nearby agents (field overlap)
       3. Gaussian noise (field entropy)
 
     Parameters
@@ -51,19 +56,22 @@ def run_fxso_toy(agents=5, steps=500, coupling=0.02, noise=0.01):
     ])
 
     trajectory = []
+    decay_k = 2.0  # localized decay: only very close agents couple strongly
 
     for _ in range(steps):
         # 1. Internal loop transformation
         states = states @ rot.T
 
-        # 2. Field coupling — proximity-weighted, no self-interaction
+        # 2. Field coupling — localized, normalized, no self-interaction
         new_states = states.copy()
         for i in range(agents):
             diffs = states - states[i]
             distances = np.linalg.norm(diffs, axis=1, keepdims=True) + 1e-6
-            weights = np.exp(-distances)          # proximity decay: closer = stronger pull
-            weights[i] = 0                        # remove self-interaction
-            new_states[i] += np.sum(diffs * weights * coupling, axis=0)
+            weights = np.exp(-decay_k * distances**2)   # localized decay
+            weights[i] = 0                              # no self-interaction
+            w_sum = np.sum(weights) + 1e-9
+            pull = np.sum(diffs * weights, axis=0) / w_sum  # normalized pull
+            new_states[i] += coupling * pull
         states = new_states
 
         # 3. Noise injection (field entropy)
@@ -85,11 +93,10 @@ def measure_regime(trajectory):
       final_spread        : std of final agent positions (lower = more coherent)
       convergence_rate    : how quickly inter-agent spread decreases
     """
-    last = trajectory[-100:]                        # last 100 steps
+    last = trajectory[-100:]
     tvar = float(np.var(last, axis=1).mean())
     spread = float(np.std(trajectory[-1], axis=0).mean())
 
-    # Convergence rate: compare spread in first vs second half
     mid = len(trajectory) // 2
     early_spread = np.std(trajectory[:mid], axis=1).mean()
     late_spread  = np.std(trajectory[mid:], axis=1).mean()
@@ -102,9 +109,10 @@ def measure_regime(trajectory):
     }
 
 
-def classify_regime(stats, collapse_threshold=0.05, drift_threshold=0.8):
+def classify_regime(stats, collapse_threshold=0.15, drift_threshold=0.7):
     """
-    Heuristic regime classification based on summary statistics.
+    Heuristic regime classification.
+    Thresholds calibrated for: agents=30, noise=0.08, decay_k=2.0
     """
     if stats["final_spread"] < collapse_threshold:
         return "COLLAPSE  — agents merged into single point"
@@ -114,18 +122,18 @@ def classify_regime(stats, collapse_threshold=0.05, drift_threshold=0.8):
         return "COHERENCE — structured alignment (interesting zone)"
 
 
-def sweep(agents=5, steps=500, noise=0.01):
+def sweep(agents=30, steps=600, noise=0.08):
     """
     Sweep coupling strengths and report regime for each.
     """
-    couplings = [0.001, 0.005, 0.01, 0.02, 0.05, 0.08, 0.1, 0.15]
+    couplings = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.4, 0.7]
     results = []
 
     print(f"\n{'coupling':>10} | {'traj_var':>10} | {'spread':>8} | {'convergence':>12} | regime")
     print("-" * 80)
 
     for c in couplings:
-        np.random.seed(42)                          # reproducible
+        np.random.seed(42)
         final, traj = run_fxso_toy(agents=agents, steps=steps, coupling=c, noise=noise)
         stats = measure_regime(traj)
         regime = classify_regime(stats)
@@ -144,22 +152,22 @@ def plot_results(results):
         print("\nInstall matplotlib to enable trajectory plots.")
         return
 
-    # Pick three regimes to show
-    targets = [results[1], results[4], results[-1]]   # drift, coherence, collapse
+    drift     = results[1]   # ~0.01
+    coherence = results[3]   # ~0.05
+    collapse  = results[6]   # ~0.4
+    targets = [drift, coherence, collapse]
     labels  = ["Drift (low coupling)", "Coherence (mid coupling)", "Collapse (high coupling)"]
-    colors  = plt.cm.tab10.colors
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    fig.suptitle("FXSO Field-Coupling: Regime Transitions", fontsize=13)
+    fig.suptitle("FXSO Field-Coupling: Three Regimes", fontsize=13)
 
     for ax, (c, stats, regime, traj), label in zip(axes, targets, labels):
         for agent_idx in range(traj.shape[1]):
             ax.plot(traj[:, agent_idx, 0], traj[:, agent_idx, 1],
-                    alpha=0.6, linewidth=0.8, color=colors[agent_idx % 10])
-            ax.scatter(*traj[0, agent_idx], marker='o', s=40, color=colors[agent_idx % 10])
-            ax.scatter(*traj[-1, agent_idx], marker='*', s=80, color=colors[agent_idx % 10])
-
-        ax.set_title(f"{label}\ncoupling={c:.3f} | spread={stats['final_spread']:.3f}")
+                    alpha=0.5, linewidth=0.7)
+        ax.scatter(traj[0, :, 0],  traj[0, :, 1],  s=15, color='k', alpha=0.4)
+        ax.scatter(traj[-1, :, 0], traj[-1, :, 1], s=35, marker='*', color='r', alpha=0.8)
+        ax.set_title(f"{label}\ncoupling={c:.3f} | spread={stats['final_spread']:.2f}")
         ax.set_aspect('equal')
         ax.grid(True, alpha=0.3)
 
@@ -179,7 +187,7 @@ if __name__ == "__main__":
     print("  COLLAPSE  = coupling too high, all agents merge")
     print()
 
-    results = sweep(agents=5, steps=500, noise=0.01)
+    results = sweep(agents=30, steps=600, noise=0.08)
     plot_results(results)
 
     print("\nInterpretation:")
@@ -190,4 +198,4 @@ if __name__ == "__main__":
     print("  - Vary noise level: does the coherence regime shrink under higher entropy?")
     print("  - Vary agent count: does coherence persist with more agents?")
     print("  - Replace rotation with actual Hyperloop loop states (Experiment 1 bridge)")
-    print("  - See minimal_experiments.md Experiment 5 for full context")
+    print("  - See 07_experiments/minimal_experiments.md Experiment 5 for full context")
