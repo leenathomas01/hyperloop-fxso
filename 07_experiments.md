@@ -147,7 +147,105 @@ Each experiment is designed to probe one specific claim. Falsification is as use
 
 ---
 
-## Experiment 5 — Does self-refining constraint geometry reduce spurious attractors?
+## Experiment 5 — Does field-based coupling produce emergent coherence?
+
+**Hypothesis:** Agents interacting via simple overlap-based coupling — with no explicit message passing — can self-organize into coherent shared trajectories under noise and internal dynamics. Coherence is a function of coupling strength relative to noise, not of any pre-programmed coordination.
+
+**What this tests:** A minimal instantiation of the FXSO hypothesis: that coupling via shared state space is sufficient to produce coordinated structure without discrete communication. This bridges Experiment 2 (propagation regimes) and Experiment 6 (self-refinement) — it is the most visceral, visualizable entry point in the set. If coherence does not emerge from overlap alone, the field-coupling framing needs additional mechanisms before it can support the rest of the framework.
+
+**Setup:**
+- Python with numpy (matplotlib optional but recommended for visualization)
+- Agents as 2D vectors evolving under a simple internal transformation (rotation matrix — a minimal proxy for Hyperloop's internal loop)
+- A shared coordinate space where proximity determines coupling strength
+
+**Procedure:**
+1. Initialize 2–10 agents with random 2D states
+2. At each timestep, apply a small fixed rotation to each agent's state (internal loop)
+3. For each agent, compute distance-weighted pull toward others — coupling force proportional to proximity, not global averaging
+4. Add Gaussian noise at each step (field entropy)
+5. Track: trajectory variance, inter-agent distance over time, visual convergence/divergence patterns
+6. Vary coupling strength across runs to find the transition between regimes
+
+**Expected signal:**
+- A "Goldilocks zone" where coupling overcomes noise but doesn't collapse diversity: agents form coherent but non-identical trajectories
+- Emergent shared dynamics that were not pre-programmed — structure arising from overlap alone
+- Three visible regimes as coupling increases: drift (no interaction) → coherence (structured alignment) → collapse (single degenerate attractor)
+
+**Failure mode:**
+- **Collapse** — agents converge to a single point immediately (coupling too high, relay regime dominates)
+- **Drift** — agents never influence each other, wander independently (coupling too low, no field effect)
+- **Noise dominance** — no stable structure forms regardless of coupling strength (field-based coupling insufficient without additional mechanisms)
+
+**Interpretation:** If coherence emerges in a specific parameter regime, it supports the claim that field-based interaction can produce structured coordination without message passing. If not, it suggests overlap alone is insufficient and additional mechanisms (constraints, loops, anisotropy) are required — which is itself a useful result.
+
+**Implementation:** See `07_experiments/fxso_toy.py` for a runnable starting point.
+
+```python
+import numpy as np
+
+def run_fxso_toy(agents=5, steps=500, coupling=0.02, noise=0.01):
+    """
+    Minimal FXSO field-coupling simulation.
+    
+    agents:   number of agents
+    steps:    timesteps to run
+    coupling: field coupling strength (try 0.005 to 0.1)
+    noise:    Gaussian noise scale (field entropy)
+    
+    Returns final agent states.
+    """
+    # Initialize agents as random 2D states
+    states = np.random.randn(agents, 2)
+    
+    # Internal loop: small rotation matrix (proxy for Hyperloop iterations)
+    theta = 0.05
+    rot = np.array([
+        [np.cos(theta), -np.sin(theta)],
+        [np.sin(theta),  np.cos(theta)]
+    ])
+    
+    trajectory = []
+    
+    for _ in range(steps):
+        # 1. Internal loop transformation
+        states = states @ rot.T
+        
+        # 2. Field coupling — proximity-weighted, not global averaging
+        new_states = states.copy()
+        for i in range(agents):
+            diffs = states - states[i]
+            distances = np.linalg.norm(diffs, axis=1, keepdims=True) + 1e-6
+            weights = np.exp(-distances)          # proximity decay
+            new_states[i] += np.sum(diffs * weights * coupling, axis=0)
+        states = new_states
+        
+        # 3. Noise injection (field entropy)
+        states += np.random.normal(0, noise, states.shape)
+        
+        trajectory.append(states.copy())
+    
+    return states, np.array(trajectory)
+
+
+# Quick sweep across coupling strengths
+if __name__ == "__main__":
+    for c in [0.005, 0.02, 0.05, 0.1]:
+        final, traj = run_fxso_toy(agents=5, coupling=c)
+        variance = np.var(traj[-100:], axis=1).mean()  # variance over last 100 steps
+        spread = np.std(final, axis=0).mean()           # final inter-agent spread
+        print(f"coupling={c:.3f} | trajectory_variance={variance:.4f} | final_spread={spread:.4f}")
+```
+
+**What to look for when you run it:**
+- `coupling=0.005`: agents drift independently (drift regime)
+- `coupling=0.02–0.05`: agents orbit together with structure (coherence regime — this is the interesting zone)
+- `coupling=0.1+`: agents collapse toward a single point (collapse regime)
+
+Plotting `traj[:, :, 0]` vs `traj[:, :, 1]` for each agent will make the regime transition immediately visible.
+
+---
+
+## Experiment 6 — Does self-refining constraint geometry reduce spurious attractors?
 
 **Hypothesis:** A simple dynamical system where constraints update based on local failure signals will, over time, produce fewer spurious stable states — states that are stable but inconsistent with the intended valid manifold.
 
@@ -177,23 +275,39 @@ Each experiment is designed to probe one specific claim. Falsification is as use
 - Valid basins also degrade → the update rule cannot distinguish valid from spurious
 - Spurious basins persist despite updates → local failure signals are not sufficient for self-refinement at this timescale
 
-**Note:** This requires no ML infrastructure at all — it's a numerical simulation. Python + numpy is sufficient. This makes it the most accessible entry point in the set.
+**Note:** Requires no ML infrastructure — Python + numpy only.
 
 ---
 
 ## Priority order
 
-If you can only run one:
+**If you can only run one, run Experiment 5** (field-coupling toy). It takes under 5 minutes, requires nothing beyond numpy, and makes the core FXSO claim immediately visible. You will see collapse, drift, and coherence as you sweep coupling values.
 
-**Start with Experiment 4** (anti-entropy). It requires the least infrastructure, tests a concrete architectural claim, and the result directly determines whether the loop-as-stabilizer framing holds.
+**Then Experiment 4** (anti-entropy). Tests a concrete architectural claim about loops with minimal ML infrastructure.
 
-**Then Experiment 1** (trajectory coherence). It builds directly on Experiment 4 and tests the foundational claim of the whole framework.
+**Then Experiment 1** (trajectory coherence). Builds on Experiment 4, tests the foundational claim of the full framework.
 
-**Then Experiment 3** (compatibility bandwidth). It requires existing models and labeled datasets only — no training — and tests the most novel construct in the framework.
+**Then Experiment 3** (compatibility bandwidth). Existing models and datasets only — no training — tests the most novel construct.
 
-Experiments 2 and 5 are valuable but can be run in parallel by someone with simulation rather than ML expertise.
+**Experiments 2 and 6** are best run by someone with simulation expertise, in parallel with the above.
 
 ---
+
+## What would count as strong evidence?
+
+The framework gains support if:
+- Field-coupled agents self-organize into coherent trajectories in a specific parameter regime (Exp 5)
+- Loop iterations show structured, non-random trajectory evolution (Exp 1)
+- Representational entropy decreases selectively for structured inputs (Exp 4)
+- Compatibility bandwidth correlates with generalization across multiple tasks (Exp 3)
+
+The framework is challenged if:
+- Field coupling produces only collapse or drift — no coherence regime exists
+- Loop states are redundant or random across iterations
+- Entropy reduction is uniform with no selectivity between structured and noise inputs
+- Compatibility bandwidth shows no correlation, or correlates with trivial properties like representation norm
+---
+
 ## What would count as strong evidence?
 
 The framework would gain support if:
