@@ -123,6 +123,9 @@ _If matplotlib is installed, a visualization (`fxso_regimes.png`) will be genera
 
 ![FXSO regimes](./fxso_regimes_v2.png)
 
+The coherence regime (middle) shows structured alignment without collapse — the key behavior predicted by FXSO.
+
+
 ---
 
 ## Why open-source this
