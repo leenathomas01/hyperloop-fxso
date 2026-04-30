@@ -1,6 +1,9 @@
 **TL;DR:**  
 A system where patterns are not evaluated for correctness, but survive, evolve, and compete for future opportunity under constrained dynamics.
 
+**FXSO (Field-Coupled State Overlap):**  
+A field-based interaction model where coupling occurs via overlapping trajectories rather than explicit message passing.
+
 ---
 # Hyperloop → FXSO: From Architecture to Emergence
 
