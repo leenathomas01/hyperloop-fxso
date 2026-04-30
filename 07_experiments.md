@@ -150,21 +150,20 @@ Each experiment is designed to probe one specific claim. Falsification is as use
 
 ## Experiment 5 — Does field-based coupling produce emergent coherence?
 
-**Hypothesis:** Agents interacting via simple overlap-based coupling — with no explicit message passing — can self-organize into coherent shared trajectories under noise and internal dynamics. Coherence is a function of coupling strength relative to noise, not of any pre-programmed coordination.
-
-This is not a synchronization model; agents are not forced into identical states, but may form structured, partially aligned trajectories.
+**Hypothesis:** Agents interacting via simple overlap-based coupling — with no explicit message passing — can self-organize into coherent shared trajectories under noise and internal dynamics. Coherence is a function of coupling strength relative to noise, not of any pre-programmed coordination. This is not a synchronization model; agents are not forced into identical states, but may form structured, partially aligned trajectories. The simulation is intentionally minimal but includes key stabilizing factors (localized coupling and normalization) required for non-degenerate behavior.
 
 **What this tests:** A minimal instantiation of the FXSO hypothesis: that coupling via shared state space is sufficient to produce coordinated structure without discrete communication. This bridges Experiment 2 (propagation regimes) and Experiment 6 (self-refinement) — it is the most visceral, visualizable entry point in the set. If coherence does not emerge from overlap alone, the field-coupling framing needs additional mechanisms before it can support the rest of the framework.
 
 **Setup:**
 - Python with numpy (matplotlib optional but recommended for visualization)
 - Agents as 2D vectors evolving under a simple internal transformation (rotation matrix — a minimal proxy for Hyperloop's internal loop)
+- Default configuration: ~30 agents, moderate noise (0.05–0.1) to ensure regime separation
 - A shared coordinate space where proximity determines coupling strength
 
 **Procedure:**
-1. Initialize 2–10 agents with random 2D states
+1. Initialize ~30 agents with random 2D states
 2. At each timestep, apply a small fixed rotation to each agent's state (internal loop)
-3. For each agent, compute distance-weighted pull toward others — coupling force proportional to proximity, not global averaging
+3. For each agent, compute proximity-weighted coupling using a localized decay (exp(-k × distance²)), and normalize the interaction so total pull remains bounded
 4. Add Gaussian noise at each step (field entropy)
 5. Track: trajectory variance, inter-agent distance over time, visual convergence/divergence patterns
 6. Vary coupling strength across runs to find the transition between regimes
@@ -173,7 +172,7 @@ This is not a synchronization model; agents are not forced into identical states
 - A "Goldilocks zone" where coupling overcomes noise but doesn't collapse diversity: agents form coherent but non-identical trajectories
 - Emergent shared dynamics that were not pre-programmed — structure arising from overlap alone
 - Three visible regimes as coupling increases: drift (no interaction) → coherence (structured alignment) → collapse (single degenerate attractor)
-- The coherence regime should show alignment without convergence to identical states (i.e., non-degenerate attractor).
+- The coherence regime should exhibit alignment without convergence to identical states — a non-degenerate attractor shaped by interaction, not synchronization
 
 **Failure mode:**
 - **Collapse** — agents converge to a single point immediately (coupling too high, relay regime dominates)
@@ -182,70 +181,48 @@ This is not a synchronization model; agents are not forced into identical states
 
 **Interpretation:** If coherence emerges in a specific parameter regime, it supports the claim that field-based interaction can produce structured coordination without message passing. If not, it suggests overlap alone is insufficient and additional mechanisms (constraints, loops, anisotropy) are required — which is itself a useful result.
 
-**Implementation:** See `fxso_toy.py` for a runnable starting point.
+**Implementation:** See `fxso_toy.py` in the repo root for a fully runnable script with sweep, regime classification, and plots.
 
 ```python
 import numpy as np
 
-def run_fxso_toy(agents=5, steps=500, coupling=0.02, noise=0.01):
-    """
-    Minimal FXSO field-coupling simulation.
-    
-    agents:   number of agents
-    steps:    timesteps to run
-    coupling: field coupling strength (try 0.005 to 0.1)
-    noise:    Gaussian noise scale (field entropy)
-    
-    Returns final agent states.
-    """
-    # Initialize agents as random 2D states
+def run_fxso_toy(agents=30, steps=600, coupling=0.05, noise=0.08):
     states = np.random.randn(agents, 2)
-    
-    # Internal loop: small rotation matrix (proxy for Hyperloop iterations)
     theta = 0.05
-    rot = np.array([
-        [np.cos(theta), -np.sin(theta)],
-        [np.sin(theta),  np.cos(theta)]
-    ])
-    
+    rot = np.array([[np.cos(theta), -np.sin(theta)],
+                    [np.sin(theta),  np.cos(theta)]])
     trajectory = []
-    
+    decay_k = 2.0  # localized decay: only close agents couple strongly
+
     for _ in range(steps):
         # 1. Internal loop transformation
         states = states @ rot.T
-        
-        # 2. Field coupling — proximity-weighted, not global averaging
+
+        # 2. Field coupling — localized, normalized, no self-interaction
         new_states = states.copy()
         for i in range(agents):
             diffs = states - states[i]
             distances = np.linalg.norm(diffs, axis=1, keepdims=True) + 1e-6
-            weights = np.exp(-distances)          # proximity decay
-            new_states[i] += np.sum(diffs * weights * coupling, axis=0)
+            weights = np.exp(-decay_k * distances**2)
+            weights[i] = 0                              # no self-interaction
+            w_sum = np.sum(weights) + 1e-9
+            pull = np.sum(diffs * weights, axis=0) / w_sum  # normalized pull
+            new_states[i] += coupling * pull
         states = new_states
-        
+
         # 3. Noise injection (field entropy)
         states += np.random.normal(0, noise, states.shape)
-        
         trajectory.append(states.copy())
-    
+
     return states, np.array(trajectory)
-
-
-# Quick sweep across coupling strengths
-if __name__ == "__main__":
-    for c in [0.005, 0.02, 0.05, 0.1]:
-        final, traj = run_fxso_toy(agents=5, coupling=c)
-        variance = np.var(traj[-100:], axis=1).mean()  # variance over last 100 steps
-        spread = np.std(final, axis=0).mean()           # final inter-agent spread
-        print(f"coupling={c:.3f} | trajectory_variance={variance:.4f} | final_spread={spread:.4f}")
 ```
 
 **What to look for when you run it:**
-- `coupling=0.005`: agents drift independently (drift regime)
-- `coupling=0.02–0.05`: agents orbit together with structure (coherence regime — this is the interesting zone)
-- `coupling=0.1+`: agents collapse toward a single point (collapse regime)
+- Low coupling (~0.005–0.02): agents drift independently (drift regime)
+- Mid coupling (~0.05–0.1): agents form structured, non-identical trajectories (coherence regime — this is the interesting zone)
+- High coupling (~0.2+): agents collapse into a tight cluster (collapse regime)
 
-Plotting `traj[:, :, 0]` vs `traj[:, :, 1]` for each agent will make the regime transition immediately visible.
+Run `python fxso_toy.py` for the full sweep with regime classification and trajectory plots across all three regimes.
 
 ---
 
@@ -310,5 +287,3 @@ The framework is challenged if:
 - Loop states are redundant or random across iterations
 - Entropy reduction is uniform with no selectivity between structured and noise inputs
 - Compatibility bandwidth shows no correlation, or correlates with trivial properties like representation norm
----
-
