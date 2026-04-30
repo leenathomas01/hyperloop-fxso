@@ -173,6 +173,7 @@ This is not a synchronization model; agents are not forced into identical states
 - A "Goldilocks zone" where coupling overcomes noise but doesn't collapse diversity: agents form coherent but non-identical trajectories
 - Emergent shared dynamics that were not pre-programmed — structure arising from overlap alone
 - Three visible regimes as coupling increases: drift (no interaction) → coherence (structured alignment) → collapse (single degenerate attractor)
+- The coherence regime should show alignment without convergence to identical states (i.e., non-degenerate attractor).
 
 **Failure mode:**
 - **Collapse** — agents converge to a single point immediately (coupling too high, relay regime dominates)
