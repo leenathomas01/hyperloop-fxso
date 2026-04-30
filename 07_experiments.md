@@ -2,11 +2,12 @@
 
 If you're new to the framework:
 
-1. Start with Experiment 4 (anti-entropy)
-2. Then run Experiment 1 (trajectory structure)
-3. Then try Experiment 3 (compatibility bandwidth)
+1. Start with Experiment 5 (field-coupling toy — fastest intuition)
+2. Then run Experiment 4 (anti-entropy)
+3. Then run Experiment 1 (trajectory structure)
+4. Then try Experiment 3 (compatibility bandwidth)
 
-These three together test the core claims with minimal setup.
+These together test the core claims from intuition → mechanism → representation.
 
 ---
 # 07 — Minimal Experiments: First Tests
@@ -310,16 +311,3 @@ The framework is challenged if:
 - Compatibility bandwidth shows no correlation, or correlates with trivial properties like representation norm
 ---
 
-## What would count as strong evidence?
-
-The framework would gain support if:
-
-- Loop iterations show structured, non-random trajectory evolution (Exp 1)
-- Representational entropy decreases selectively for structured inputs (Exp 4)
-- Compatibility bandwidth correlates with generalization across tasks (Exp 3)
-
-It would be challenged if:
-
-- Loop states are redundant or random
-- Entropy reduction is uniform (no selectivity)
-- Compatibility bandwidth shows no correlation or trivial correlation
