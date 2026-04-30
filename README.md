@@ -95,6 +95,7 @@ If you want an immediate, runnable intuition for the FXSO idea:
 
 ```bash
 python fxso_toy.py
+```
 
 This runs a minimal field-coupling simulation where:
 
