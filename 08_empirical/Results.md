@@ -66,7 +66,7 @@ Motion=0.0 (kill test) confirms that internal dynamics are necessary: without ro
 See `validation/fxso_validation_stress_thickness.png`.
 
 
-![Topological Stress Test](./validation/fxso_validation_stress_thickness.png)
+![Topological Stress Test](../validation/fxso_validation_stress_thickness.png)
 
 ---
 
