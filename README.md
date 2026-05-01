@@ -147,7 +147,7 @@ All of those outcomes are fine.
 | `05_open_questions/` | What remains unresolved, explicitly flagged |
 | `06_nuggets/` | Compressed, portable ideas — the reusable units |
 | `07_experiments/` | 6 minimal, concrete experiments to probe the key claims |
-| 08_empirical/` | Actual experimental results — stress tests, phase sweeps, regime map|
+| `08_empirical/` | Actual experimental results — stress tests, phase sweeps, regime map|
 | `fxso_toy.py/` | Immediate, runnable intuition for the FXSO idea |
 
 Start with 01_foundations if you want to follow the derivation. Start with `03_framework` if you want the conclusions first. Start with `06_nuggets` if you want the portable ideas without the journey. Start with `07_experiments` if you want to test something immediately. Start with `08_empirical/Results.md` if you want to see what was actually measured.
