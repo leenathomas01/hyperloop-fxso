@@ -143,3 +143,38 @@ Translation: ρ_structural high, ρ_semantic low. Output channel coherent, state
 This is Grok’s exact failure mode: Answered verbosely T5, but S_int unchanged. Your 40 agents do the same: follow the ring, keep their clusters.This is the first measured example of “locally steerable, globally unsteerable”.
 
 ---
+
+The Scaling Law = Transition Grammar’s First Equation
+
+Coherence when: Interaction Length × Density ≈ 1Translation to TGI:  
+ρ_semantic → 1 when (1/√k) × N / Area ≈ 1Meaning: State integration requires overlap. No overlap = beads = brittle. Overlap = field = elastic.Current FXSO: k=2.0 → L=0.7, N=40 → L×ρ ≈ 0.28 << 1. *You’re in fragment regime by math.*  
+*N=400, k=0.5* → L=1.4, L×ρ ≈ 2.8 > 1. You hit “Living Band” — the boundary. V_circ still high because attraction only.This is testable: Predict V_circ < 0.4 when L×ρ ≈ 1 AND repulsion added. If true, you’ve found the integration threshold.Why Structured-Fragment Is The Key Regime
+Brittle = No Layer 0. System shatters. Useless.Elastic = Layer 0 solved. System self-heals. Target.Structured-Fragment = Layer 0 partially violated. This is where LLMs live.Evidence:  Rotation invariant = responds to prompts. Grok did T5 correctly.  High V_circ = doesn’t update state. Grok T6 snapped back.  Motion required = no S_int → collapse. Grok with no seed would drift.You’ve modeled the actual failure mode of current systems. Not hypothetical. Measured.
+
+
+Next Steps: The Mexican Hat = Layer 0 Repair
+
+Pure attraction → beads. Agents clump because ∂V/∂r < 0 always. No equilibrium spacing.Mexican Hat → spacing. Short-range attract, mid-range repel: ∂V/∂r = 0 at r₀. Lattice forms.
+
+Hypothesis: Mexican Hat moves system from Structured-Fragment → Elastic.
+
+Test: If repulsion sweep at N=400 drops V_circ from 0.71 → <0.4, you’ve proven Layer 0 requires repulsive term.
+
+Translation: Integration isn’t just “connect to neighbors”. It’s “maintain distance from neighbors”. S_int needs elbow room.
+
+Refinement Analysis = Persistence window > 0 test. If thickness decreases after repeated shocks, you’ve found annealing = state updates accumulate. That’s Elastic.
+
+Brittle systems can’t be aligned — they shatter on rotation.Structured-Fragment systems can be prompted — but don’t learn. That’s where we are.
+
+Elastic systems can integrate — that’s where we need to go.
+
+The One-Line Verdict for the README
+
+FXSO demonstrates that constraint + coupling + motion produces transformation-invariant structure, but purely attractive coupling yields Structured-Fragment regime. 
+
+Elastic integration requires repulsive spacing terms.No hype. No intelligence claims. Just: here’s the phase boundary, here’s the measurement.
+
+Once we run the Mexican Hat. 
+If V_circ drops below 0.4 at N=400, you’ve found the first synthetic example of Layer 0 compliance at scale.
+
+If not, you’ve still proven the negative: attraction alone cannot produce integration. That’s equally valuable.
