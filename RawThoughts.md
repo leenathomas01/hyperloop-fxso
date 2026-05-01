@@ -180,3 +180,159 @@ Once we run the Mexican Hat.
 If V_circ drops below 0.4 at N=400, you’ve found the first synthetic example of Layer 0 compliance at scale.
 
 If not, you’ve still proven the negative: attraction alone cannot produce integration. That’s equally valuable.
+
+
+---
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def compute_thickness(states):
+    dists = np.linalg.norm(states, axis=1)
+    return np.std(dists)
+
+def run_stress_test(
+    agents=40,
+    steps=1000,
+    coupling=0.06,
+    motion=0.06,
+    k=2.0,
+    radius=1.2,
+    noise=0.05,
+    seed=42
+):
+    np.random.seed(seed)
+
+    states = np.random.randn(agents, 2) * 2.5
+    rot = np.array([
+        [np.cos(motion), -np.sin(motion)],
+        [np.sin(motion),  np.cos(motion)]
+    ])
+
+    history = []
+    thickness_log = {}
+
+    for t in range(steps):
+        states = states @ rot.T
+        new_states = states.copy()
+
+        # FXSO coupling
+        for i in range(agents):
+            diffs = states - states[i]
+            dist_sq = np.sum(diffs**2, axis=1, keepdims=True)
+            weights = np.exp(-k * dist_sq)
+            weights[i] = 0
+
+            pull = np.sum(diffs * weights, axis=0) / (np.sum(weights) + 1e-9)
+            new_states[i] += coupling * pull
+
+        # Record baseline before shocks
+        if t == 299:
+            thickness_log["pre_shock"] = compute_thickness(new_states)
+
+        # Shock events
+        if t == 300:
+            new_states += np.random.randn(agents, 2) * 1.8
+        elif t == 600:
+            kick_rot = np.array([[0, -1], [1, 0]])
+            new_states = new_states @ kick_rot.T
+
+        # Record after rotation
+        if t == 601:
+            thickness_log["post_rotation"] = compute_thickness(new_states)
+
+        # Constraint
+        d_center = np.linalg.norm(new_states, axis=1, keepdims=True)
+        new_states += (d_center < radius) * (new_states / (d_center + 1e-6)) * 0.2
+
+        # Noise
+        states = new_states + np.random.normal(0, noise, states.shape)
+        history.append(states.copy())
+
+    return np.array(history), thickness_log
+
+
+if _name_ == "_main_":
+    history, thickness = run_stress_test()
+
+    print("\nThickness Metrics:")
+    print(thickness)
+
+    plt.figure(figsize=(6,6))
+    plt.scatter(history[-1,:,0], history[-1,:,1], s=25)
+    plt.title("FXSO Stress Test — Final State")
+    plt.axis("equal")
+    plt.show()
+
+
+
+
+import numpy as np
+
+def calculate_circular_variance(states):
+    angles = np.arctan2(states[:, 1], states[:, 0])
+    r = np.abs(np.mean(np.exp(1j * angles)))
+    return 1 - r
+
+
+def run_minimal_sim(
+    theta,
+    n=40,
+    steps=600,
+    coupling=0.06,
+    k=2.0,
+    radius=1.2,
+    noise=0.05,
+    seed=42
+):
+    np.random.seed(seed)
+
+    states = np.random.randn(n, 2) * 2.0
+    rot = np.array([
+        [np.cos(theta), -np.sin(theta)],
+        [np.sin(theta),  np.cos(theta)]
+    ])
+
+    for _ in range(steps):
+        states = states @ rot.T
+        new_states = states.copy()
+
+        for i in range(n):
+            diffs = states - states[i]
+            dist_sq = np.sum(diffs**2, axis=1, keepdims=True)
+            weights = np.exp(-k * dist_sq)
+            weights[i] = 0
+
+            pull = np.sum(diffs * weights, axis=0) / (np.sum(weights) + 1e-9)
+            new_states[i] += coupling * pull
+
+        # Constraint
+        d_center = np.linalg.norm(new_states, axis=1, keepdims=True)
+        new_states += (d_center < radius) * (new_states / (d_center + 1e-6)) * 0.2
+
+        states = new_states + np.random.normal(0, noise, states.shape)
+
+    return states
+
+
+def sweep_motion_regimes():
+    motions = [0.0, 0.01, 0.02, 0.04, 0.06, 0.1, 0.2]
+
+    print(f"{'Theta':>6} | {'Circ Var':>10} | {'Regime'}")
+    print("-" * 40)
+
+    for theta in motions:
+        final_state = run_minimal_sim(theta)
+        c_var = calculate_circular_variance(final_state)
+
+        regime = "FRAGMENTED" if c_var > 0.6 else "PARTIAL"
+        print(f"{theta:>6.2f} | {c_var:>10.2f} | {regime}")
+
+
+if _name_ == "_main_":
+    sweep_motion_regimes()
+
+    ---
+
+    Break over, pausing. refinemnets done to be uploaded later.
