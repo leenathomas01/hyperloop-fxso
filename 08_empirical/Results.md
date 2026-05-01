@@ -240,6 +240,7 @@ states[:, 1] = radii * np.sin(angles + dtheta)
 ```
 
 **Success condition:** V_circ increases toward 1.0 while thickness stays low → elastic regime confirmed.
+
 **Failure condition:** Thickness increases as V_circ rises → phase and radius are not independent → elastic requires memory or global coordination.
 
 ---
