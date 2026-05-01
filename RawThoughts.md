@@ -118,7 +118,9 @@ To move from the *Structured-Fragment* regime to a *Coherent Elastic Field, the 
  1. *Multi-Scale Interaction:* Implementation of a "Mexican Hat" kernel (short-range attraction + medium-range repulsion).
  2. *Repulsion Sweep:* Testing if "elbow room" between agents allows the N=400 manifold to finally cross the V_{circ} < 0.4 threshold.
  3. *Refinement Analysis:* Measuring if a coherent field can "anneal" (get thinner/cleaner) after repeated shocks, indicating a self-correcting latent space.
-Results compiled May 2026. Data generated via fxso_stress_test.py and fxso_motion_sweep.py.
+Results compiled May 2026.
+
+Data generated via **fxso_stress_test.py** and **fxso_motion_sweep.py**.
 
 ---
 
