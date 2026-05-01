@@ -1,6 +1,6 @@
 # Empirical Results: The FXSO Phase Map
 
-This document records findings from stress tests and phase sweeps conducted on the FXSO toy model after adding a central constraint geometry (forbidden zone). It follows the baseline results in `07_experiments/minimal_experiments.md` and extends them into constrained dynamics.
+This document records findings from stress tests and phase sweeps conducted on the FXSO toy model after adding a central constraint geometry (forbidden zone). It follows the baseline results in `07_experiments.md` and extends them into constrained dynamics.
 
 ---
 
