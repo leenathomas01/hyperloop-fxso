@@ -81,7 +81,7 @@ Annealing score was negative in both runs — the system diffused rather than ti
 
 V_circ remained high (0.71–0.91) across all tested values. No transition to a distributed or continuous manifold was observed at any rotation speed, including θ = 1.0 rad/step.
 
-**Verdict: Critical velocity hypothesis falsified** (within this formulation).
+**Verdict: Critical velocity hypothesis not observed under current interaction model.**
 
 Internal motion affects the *dynamics* of clusters — beads become fluid rather than static — but does not alter their *topology*. The system consistently forms local attractors regardless of motion speed. Motion is necessary for fluidity but not sufficient for coherence.
 
@@ -118,6 +118,7 @@ The bottom-right corner (N=400, k=0.5) showed the richest internal structure (St
 ```
 Coherence emerges when:
     interaction_length × density_along_manifold ≈ 1
+    (empirically directional — necessary direction, not sufficient condition under current dynamics)
 
 Where:
     λ  = 1/√k          (interaction reach from decay kernel)
