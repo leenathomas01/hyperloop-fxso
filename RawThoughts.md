@@ -59,9 +59,14 @@ We can try:
 
 Problem: too many moving parts → no signal clarity
 
-**Direction 3** - Bridge experiments ✅
+**Direction 3** - Bridge experiments - Yes ✅
 
-will have to think of those
+will have to think in this line.
 
+Basically build a way to move from symbolic reasoning → dynamical reasoning
+
+---
+
+Idea paused for my next free window. 
 
 
