@@ -333,6 +333,24 @@ def sweep_motion_regimes():
 if _name_ == "_main_":
     sweep_motion_regimes()
 
-    ---
+---
 
     Break over, pausing. refinemnets done to be uploaded later.
+
+---
+
+9:40 pm ist 01 May 2026--> updates happened. 
+have to modify files now
+
+Codex 5.5 thinking high (AWESOME by the way) ran the updated scripts and well the plots were the audit trail.
+
+---
+
+We evaluate the FXSO system across stress tests, motion sweeps, and multi-scale interaction models.
+
+Findings:
+
+- Topological Invariance: Observed at the geometry level (annular manifold persists under rotation).
+- Critical Velocity Hypothesis: Falsified (internal motion does not induce phase transition to uniform field).
+- New Regime Identified: Orbital Coherence — stable trajectory-level structure with phase-locked agents.
+- Elastic Regime: Not achieved under current dynamics.
