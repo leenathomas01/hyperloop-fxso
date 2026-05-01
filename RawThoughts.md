@@ -334,8 +334,9 @@ if _name_ == "_main_":
     sweep_motion_regimes()
 
 ---
+---
 
-    Break over, pausing. refinemnets done to be uploaded later.
+Break over, pausing. refinemnets done to be uploaded later.
 
 ---
 
@@ -354,3 +355,14 @@ Findings:
 - Critical Velocity Hypothesis: Falsified (internal motion does not induce phase transition to uniform field).
 - New Regime Identified: Orbital Coherence — stable trajectory-level structure with phase-locked agents.
 - Elastic Regime: Not achieved under current dynamics.
+
+
+---
+
+**Structure in FXSO is governed by constraint geometry and interaction scale,
+but phase distribution requires an additional mechanism.**
+
+**Coupling + motion → trajectory coherence
+Phase decorrelation → required for full field coherence**
+
+---
