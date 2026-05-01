@@ -125,6 +125,20 @@ _If matplotlib is installed, a visualization (`fxso_regimes.png`) will be genera
 
 The coherence regime (middle) shows structured alignment without collapse — the key behavior predicted by FXSO.
 
+---
+
+### Minimal Regime Demonstration (Toy Model)
+
+The initial FXSO toy model shows three qualitative regimes:
+- Drift
+- Coherence
+- Collapse
+
+However, deeper analysis (Section 08: Empirical Results) reveals that
+the "Coherence" regime is not a fully distributed field, but a
+Structured-Fragment or Orbital Coherent regime.
+
+This highlights the limitation of purely visual or low-resolution analysis.
 
 ---
 
