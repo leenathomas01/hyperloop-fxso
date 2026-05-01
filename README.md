@@ -19,7 +19,7 @@ This repository documents an exploration that started with a transformer archite
 
 It was not planned to go there. It went there anyway.
 
-The ideas here were developed across three conversation threads (Zee + Thea/ChatGPT, Zee + Claude/Anthropic) over a single session of exploratory thinking. Nothing here is peer-reviewed. Everything here is open for anyone with the right expertise to pick up, test, formalize, or discard.
+The ideas here were developed across conversation threads (Zee + Thea/ChatGPT + Claude/Anthropic + Gemini + Grok + Meta Ai Muse Spark) over a single session of exploratory thinking. Nothing here is peer-reviewed. Everything here is open for anyone with the right expertise to pick up, test, formalize, or discard.
 
 ---
 
@@ -147,9 +147,10 @@ All of those outcomes are fine.
 | `05_open_questions/` | What remains unresolved, explicitly flagged |
 | `06_nuggets/` | Compressed, portable ideas — the reusable units |
 | `07_experiments/` | 6 minimal, concrete experiments to probe the key claims |
+| 08_empirical/` | Actual experimental results — stress tests, phase sweeps, regime map|
 | `fxso_toy.py/` | Immediate, runnable intuition for the FXSO idea |
 
-Start with `01_foundations` if you want to follow the derivation. Start with `03_framework` if you want the conclusions first. Start with `06_nuggets` if you want the portable ideas without the journey. Start with `07_experiments` if you want to test something immediately.
+Start with 01_foundations if you want to follow the derivation. Start with `03_framework` if you want the conclusions first. Start with `06_nuggets` if you want the portable ideas without the journey. Start with `07_experiments` if you want to test something immediately. Start with `08_empirical/Results.md` if you want to see what was actually measured.
 
 ---
 
