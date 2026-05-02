@@ -31,3 +31,5 @@ Requires numpy and matplotlib. Runs all three empirical scripts and saves plots 
 - **Stress test:** rotation produces moderate disruption (+0.118), not a clean glide. Partial invariance.
 - **Motion sweep:** V_circ flat across all θ. Critical velocity hypothesis falsified.
 - **Mexican Hat:** trajectory = clean ring. Final state = tight angular cluster. V_circ = 0.003 means phase-locked, not uniform. **Orbital Coherence, not Elastic.**
+
+--- 
