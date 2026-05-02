@@ -179,4 +179,4 @@ See `CONTRIBUTING.md`. The bar is low: if you find something wrong, interesting,
 
 ---
 
-*Explored by Zee. Developed in dialogue with Thea (ChatGPT), Gemini, Grok 4.3 Beta and Claude (Anthropic). May 2026.*
+*Explored by Zee. Developed in dialogue with Thea (ChatGPT),Claude (Anthropic), Gemini 3.1, Grok 4.3 Beta, Muse Spark (Meta Ai). May 2026.*
