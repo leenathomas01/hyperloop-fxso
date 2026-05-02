@@ -108,22 +108,12 @@ This runs a minimal field-coupling simulation where:
 You will observe three regimes:
 
 - **Drift** — no interaction (coupling too low)
-- **Coherence** — structured alignment emerges (target regime)
+- **Coherence** — structured alignment emerges (later identified as Structured-Fragment / Orbital Coherent under deeper analysis — see `08_empirical/Results.md`)
 - **Collapse** — agents merge into a single point (coupling too high)
 
-The interesting result is the middle:
+The interesting result is the middle: structured coordination emerges purely from overlap dynamics — no explicit communication. This is the simplest instantiation of the FXSO hypothesis.
 
-structured coordination emerges purely from overlap dynamics — no explicit communication.
-
-This is the simplest instantiation of the FXSO hypothesis.
-
-See fxso_toy.py for details.
-
-_If matplotlib is installed, a visualization (`fxso_regimes.png`) will be generated._
-
-![FXSO regimes](./fxso_regimes_v2.png)
-
-The coherence regime (middle) shows structured alignment without collapse — the key behavior predicted by FXSO.
+If matplotlib is installed, a visualization (fxso_regimes.png) will be generated.
 
 ---
 
