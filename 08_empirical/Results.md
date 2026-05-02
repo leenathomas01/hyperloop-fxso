@@ -175,7 +175,7 @@ The system achieves stable annular *trajectory* without achieving uniform annula
 
 See `validation/fxso_validation_mhat_regime.png`.
 
-![Multi-Scale Interaction (Mexican Hat Kernel)](. ./validation/fxso_validation_mhat_regime.png)
+![Multi-Scale Interaction (Mexican Hat Kernel)](../validation/fxso_validation_mhat_regime.png)
 
 ---
 
