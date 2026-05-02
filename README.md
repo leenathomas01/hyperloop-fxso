@@ -19,7 +19,7 @@ This repository documents an exploration that started with a transformer archite
 
 It was not planned to go there. It went there anyway.
 
-The ideas here were developed across conversation threads (Zee + Thea/ChatGPT + Claude/Anthropic + Gemini + Grok + Meta Ai Muse Spark) over a single session of exploratory thinking. Nothing here is peer-reviewed. Everything here is open for anyone with the right expertise to pick up, test, formalize, or discard.
+The ideas here were developed across conversation threads (Zee + Thea/ChatGPT + Claude/Anthropic + Gemini + Grok + Meta Ai Muse Spark) over a single session of exploratory thinking. This then underwent iterations. And honestly, is still ongoing. Nothing here is peer-reviewed. Everything here is open for anyone with the right expertise to pick up, test, formalize, or discard.
 
 ---
 
