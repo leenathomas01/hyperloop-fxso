@@ -366,3 +366,115 @@ but phase distribution requires an additional mechanism.**
 Phase decorrelation → required for full field coherence**
 
 ---
+
+11:20 am ist 02 may 2026 saturday interesting pivos happened
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# --- CONFIGURATION ---
+AGENTS           = 1200
+STEPS            = 1800
+R0               = 1.2    
+Z_MAX            = 4.5    
+# Topological Params
+VOID_SAMPLES     = 8     # Samples per local Z-ring
+VOID_THRESH      = 0.12  
+GAP_ATTRACT      = 0.08  # Wicking force
+# Permeability & Stability
+STABILITY_FLOOR  = 0.025 # Clamp Adaptive T
+PERM_THRESHOLD   = 4.0   # Density at which overlap begins
+# ----------------------
+
+def compute_stability(states, z_val):
+    mask = (states[:, 2] > z_val - 0.2) & (states[:, 2] < z_val + 0.2)
+    if np.sum(mask) < 6: return 0.5 
+    radii = np.linalg.norm(states[mask, :2], axis=1)
+    return np.std(radii)
+
+def run_manifold_flow():
+    np.random.seed(42)
+    states = np.random.randn(AGENTS, 3) * 0.4
+    states[:, 2] += 0.5 
+    thickness_history = [0.5]
+
+    print(f"Running Manifold Continuity Flow (N={AGENTS})...")
+    for t in range(STEPS):
+        new_states = states.copy()
+        
+        # 1. HARD GEOMETRY: Radial Lock
+        rho = np.linalg.norm(new_states[:, :2], axis=1, keepdims=True)
+        radial_vec = np.zeros_like(new_states)
+        radial_vec[:, :2] = new_states[:, :2] / (rho + 1e-6)
+        new_states[:, :2] += 0.3 * (R0 - rho) * radial_vec[:, :2]
+
+        # 2. CONTINUITY FLOW: Asymmetric Projection & Permeability
+        vert_unit = np.array([0, 0, 1.0])
+        
+        for i in range(AGENTS):
+            # Local density check for Permeability
+            dist_sq_all = np.sum((states - states[i])**2, axis=1)
+            local_rho = np.sum(np.exp(-dist_sq_all / 0.05))
+            
+            # Gated Void Interaction
+            curr_z = states[i, 2]
+            angles = np.linspace(0, 2*np.pi, VOID_SAMPLES, endpoint=False)
+            
+            for ang in angles:
+                s_pt = np.array([R0*np.cos(ang), R0*np.sin(ang), curr_z])
+                diff = s_pt - states[i]
+                dist = np.linalg.norm(diff)
+                
+                if dist < 0.5:
+                    f_raw = diff / (dist + 1e-6)
+                    # TANGENTIAL PROJECTION for Repulsion
+                    f_tan = f_raw - np.dot(f_raw, radial_vec[i]) * radial_vec[i] \
+                                  - np.dot(f_raw, vert_unit) * vert_unit
+                    
+                    if dist < VOID_THRESH:
+                        # State-Triggered Permeability: Relax repulsion if crowded[cite: 1]
+                        chi_p = 1.0 / (1.0 + np.exp(-(local_rho - PERM_THRESHOLD)))
+                        new_states[i] -= (1.0 - chi_p) * 0.07 * f_tan
+                        
+                    elif dist > VOID_THRESH * 2:
+                        # VOID COMPLETION: Full 3D Wicking (No projection)[cite: 1]
+                        new_states[i] += GAP_ATTRACT * f_raw
+
+        # 3. VERTICAL PROPAGATION: Stability-Gated Pressure[cite: 1]
+        avg_th = compute_stability(states, np.mean(states[:, 2]))
+        thickness_history.append(avg_th)
+        adaptive_t = max(STABILITY_FLOOR, np.mean(thickness_history[-50:]))
+
+        for i in range(AGENTS):
+            z_i = states[i, 2]
+            s_below = compute_stability(states, z_i - 0.25)
+            # Upward gate based on lower stability
+            chi_up = 1.0 / (1.0 + np.exp((s_below - adaptive_t) * 40))
+            
+            if z_i < Z_MAX:
+                new_states[i, 2] += chi_up * 0.02
+            
+            # Global Continuity: Small pull toward the vertical center of mass
+            new_states[i, 2] += 0.005 * (np.mean(states[:, 2]) - z_i)
+
+        states = new_states
+        if t % 300 == 0:
+            print(f"Step {t:>4} | Max Z: {np.max(states[:, 2]):.2f} | Adaptive T: {adaptive_t:.4f}")
+
+    return states
+
+def plot_final_manifold(states):
+    fig = plt.figure(figsize=(10, 12))
+    ax = fig.add_subplot(111, projection='3d')
+    sc = ax.scatter(states[:, 0], states[:, 1], states[:, 2], 
+                    c=states[:, 2], cmap='viridis', s=7, alpha=0.6)
+    ax.set_title("3D Manifold Continuity Flow: Permeability Enabled")
+    ax.set_zlim(0, Z_MAX + 1)
+    plt.colorbar(sc, label='Vertical Z-Level')
+    plt.show()
+
+if __name__ == "__main__":
+    final_states = run_manifold_flow()
+    plot_final_manifold(final_states)
