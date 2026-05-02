@@ -65,9 +65,6 @@ Motion=0.0 (kill test) confirms that internal dynamics are necessary: without ro
 
 See `validation/fxso_validation_stress_thickness.png`.
 
-
-![Topological Stress Test](../validation/fxso_validation_stress_thickness.png)
-
 ---
 
 ## Experiment 2 — Motion Sweep
@@ -97,8 +94,6 @@ V_circ remains high (0.65–1.0) across all values. No downward trend. No transi
 Internal motion changes the *dynamics* of clusters (beads circulate rather than freeze) but does not change their *topology* (beads persist). Fragmentation is an attractor of purely attractive coupling, not a parameter-tunable property.
 
 See `validation/fxso_validation_motion_sweep_raw.png`.
-
-![Motion Sweep](../validation/fxso_validation_motion_sweep_raw.png)
 
 ---
 
@@ -176,8 +171,6 @@ The system achieves stable annular *trajectory* without achieving uniform annula
 
 See `validation/fxso_validation_mhat_regime.png`.
 
-![Multi-Scale Interaction (Mexican Hat Kernel)](../validation/fxso_validation_mhat_regime.png)
-
 ---
 
 ## Regime Map
@@ -192,6 +185,18 @@ See `validation/fxso_validation_mhat_regime.png`.
 ---
 
 ## The Core Discovery
+
+> **🔑 Core Insight**
+>
+> **Trajectory coherence ≠ State distribution**
+>
+> A system can exhibit:
+> - stable global geometry (ring trajectory over time)
+> - tight radial structure (low thickness)
+>
+> while still failing to distribute agents across that manifold (phase-locked instantaneous state).
+>
+> This distinction defines the gap between the Orbital Coherent and Elastic regimes — and it cannot be closed by adjusting coupling strength, motion speed, or agent density alone.
 
 The experiments separate two properties that are often conflated:
 
@@ -240,7 +245,6 @@ states[:, 1] = radii * np.sin(angles + dtheta)
 ```
 
 **Success condition:** V_circ increases toward 1.0 while thickness stays low → elastic regime confirmed.
-
 **Failure condition:** Thickness increases as V_circ rises → phase and radius are not independent → elastic requires memory or global coordination.
 
 ---
