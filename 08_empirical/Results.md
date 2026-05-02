@@ -65,6 +65,8 @@ Motion=0.0 (kill test) confirms that internal dynamics are necessary: without ro
 
 See `validation/fxso_validation_stress_thickness.png`.
 
+![Topological Stress Test](../validation/fxso_validation_stress_thickness.png)
+
 ---
 
 ## Experiment 2 — Motion Sweep
@@ -94,6 +96,8 @@ V_circ remains high (0.65–1.0) across all values. No downward trend. No transi
 Internal motion changes the *dynamics* of clusters (beads circulate rather than freeze) but does not change their *topology* (beads persist). Fragmentation is an attractor of purely attractive coupling, not a parameter-tunable property.
 
 See `validation/fxso_validation_motion_sweep_raw.png`.
+
+![Motion Sweep]( ../validation/fxso_validation_motion_sweep_raw.png)
 
 ---
 
@@ -170,6 +174,8 @@ The system achieves stable annular *trajectory* without achieving uniform annula
 **Verdict: Orbital Coherence achieved. Elastic regime not achieved.**
 
 See `validation/fxso_validation_mhat_regime.png`.
+
+![ Multi-Scale Interaction (Mexican Hat Kernel)](. ./validation/fxso_validation_mhat_regime.png)
 
 ---
 
