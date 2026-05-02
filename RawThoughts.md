@@ -478,3 +478,140 @@ def plot_final_manifold(states):
 if __name__ == "__main__":
     final_states = run_manifold_flow()
     plot_final_manifold(final_states)
+
+---
+
+welp that crashed and burnt and revealed interesting data..
+okay ket me try this one
+
+fxso_cdcf_3d_v3.py --> This script implements Normalized Continuity and Capacity-Gated Propagation.
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# --- CONFIGURATION ---
+AGENTS           = 1200
+STEPS            = 2000
+R0               = 1.2    
+Z_MAX            = 4.5    
+# Normalized Continuity Params
+VOID_SAMPLES     = 48     # High res, but normalized
+VOID_THRESH      = 0.12  
+GAP_ATTRACT      = 0.04   # Reduced to prevent collapse
+# Capacity & Flow
+TARGET_PER_SLICE = AGENTS / (Z_MAX / 0.5) # Expected agents per 0.5Z unit
+PERM_DENSITY_TH  = 4.0   
+STABILITY_FLOOR  = 0.03   
+# ----------------------
+
+def compute_stability(states, z_val):
+    mask = (states[:, 2] > z_val - 0.25) & (states[:, 2] < z_val + 0.25)
+    if np.sum(mask) < 8: return 0.5 
+    radii = np.linalg.norm(states[mask, :2], axis=1)
+    return np.std(radii)
+
+def run_cdcf_v3():
+    np.random.seed(42)
+    states = np.random.randn(AGENTS, 3) * 0.4
+    states[:, 2] += 0.3
+    thickness_history = [0.5]
+
+    print(f"Running CDCF v3: Normalized Capacity Flow (N={AGENTS})...")
+    for t in range(STEPS):
+        new_states = states.copy()
+        
+        # 1. GEOMETRY: Adaptive Radial Lock
+        rho = np.linalg.norm(new_states[:, :2], axis=1, keepdims=True)
+        for i in range(AGENTS):
+            dist_sq = np.sum((states - states[i])**2, axis=1)
+            local_rho = np.sum(np.exp(-dist_sq / 0.05))
+            k_r = 0.4 * (1.0 - min(0.6, local_rho / 10.0))
+            radial_unit = np.array([states[i,0], states[i,1], 0]) / (rho[i] + 1e-6)
+            new_states[i] += k_r * (R0 - rho[i]) * radial_unit
+
+        # 2. TOPOLOGY: Normalized Continuity Flow
+        vert_unit = np.array([0, 0, 1.0])
+        for i in range(AGENTS):
+            curr_z = states[i, 2]
+            f_total = np.zeros(3)
+            f_count = 0
+            
+            # Local density and gap-sensing
+            dist_sq_all = np.sum((states - states[i])**2, axis=1)
+            local_rho_i = np.sum(np.exp(-dist_sq_all / 0.05))
+            
+            for z_off in [-0.2, 0, 0.2]: # Multi-level awareness
+                angles = np.linspace(0, 2*np.pi, VOID_SAMPLES, endpoint=False)
+                for ang in angles:
+                    s_pt = np.array([R0*np.cos(ang), R0*np.sin(ang), curr_z + z_off])
+                    diff = s_pt - states[i]
+                    dist = np.linalg.norm(diff)
+                    
+                    if dist < 0.5:
+                        f_raw = diff / (dist + 1e-6)
+                        radial_i = np.array([states[i,0], states[i,1], 0]) / (rho[i] + 1e-6)
+                        f_tan = f_raw - np.dot(f_raw, radial_i) * radial_i \
+                                      - np.dot(f_raw, vert_unit) * vert_unit
+                        
+                        if dist < VOID_THRESH:
+                            # State-Triggered Permeability
+                            gap_signal = dist - VOID_THRESH
+                            chi_p = (1.0 / (1.0 + np.exp(-(local_rho_i - PERM_DENSITY_TH)))) * \
+                                    (1.0 / (1.0 + np.exp(-gap_signal * 10)))
+                            f_total -= (1.0 - chi_p) * 0.1 * f_tan
+                            f_count += 1
+                        elif dist > VOID_THRESH * 2:
+                            # VOID COMPLETION: Gap-aware attraction
+                            if local_rho_i < PERM_DENSITY_TH:
+                                f_total += GAP_ATTRACT * f_raw
+                                f_count += 1
+            
+            # NORMALIZATION: Average influence, not sum
+            if f_count > 0:
+                new_states[i] += f_total / f_count
+
+        # 3. PROPAGATION: Capacity-Gated Growth[cite: 1]
+        avg_th = compute_stability(states, np.mean(states[:, 2]))
+        thickness_history.append(avg_th)
+        adaptive_t = max(STABILITY_FLOOR, np.mean(thickness_history[-50:]))
+
+        for i in range(AGENTS):
+            z_i = states[i, 2]
+            # Check capacity of the CURRENT slice
+            slice_mask = (states[:, 2] > z_i - 0.25) & (states[:, 2] < z_i + 0.25)
+            slice_count = np.sum(slice_mask)
+            
+            # Resist upward flow if slice is over target capacity[cite: 1]
+            capacity_gate = 1.0 / (1.0 + np.exp((slice_count - TARGET_PER_SLICE) * 0.1))
+            
+            s_below = compute_stability(states, z_i - 0.25)
+            chi_up = 1.0 / (1.0 + np.exp((s_below - adaptive_t) * 40))
+            
+            if z_i < Z_MAX:
+                new_states[i, 2] += (chi_up * capacity_gate * 0.02)
+                # Local Vertical Coupling[cite: 1]
+                local_mask = dist_sq_all < 0.3**2
+                if np.any(local_mask):
+                    z_mean_local = np.mean(states[local_mask, 2])
+                    new_states[i, 2] += 0.01 * (z_mean_local - z_i)
+
+        states = new_states
+        if t % 300 == 0:
+            print(f"Step {t:>4} | Max Z: {np.max(states[:, 2]):.2f} | Adaptive T: {adaptive_t:.4f}")
+
+    return states
+
+def plot_v3(states):
+    fig = plt.figure(figsize=(10, 12))
+    ax = fig.add_subplot(111, projection='3d')
+    sc = ax.scatter(states[:, 0], states[:, 1], states[:, 2], 
+                    c=states[:, 2], cmap='viridis', s=7, alpha=0.6)
+    ax.set_title("CDCF v3: Normalized Capacity Flow")
+    ax.set_zlim(0, Z_MAX + 1)
+    plt.colorbar(sc, label='Vertical Growth Level')
+    plt.show()
+
+if __name__ == "__main__":
+    final_states = run_cdcf_v3()
+    plot_v3(final_states)
