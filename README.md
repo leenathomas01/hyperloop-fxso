@@ -113,7 +113,12 @@ You will observe three regimes:
 
 The interesting result is the middle: structured coordination emerges purely from overlap dynamics — no explicit communication. This is the simplest instantiation of the FXSO hypothesis.
 
-If matplotlib is installed, a visualization (fxso_regimes.png) will be generated.
+_If matplotlib is installed, a visualization (`fxso_regimes.png`) will be generated._
+
+![FXSO regimes](./fxso_regimes.png)
+
+The coherence regime (middle) shows structured alignment without collapse — the key behavior predicted by FXSO.
+
 
 ---
 
