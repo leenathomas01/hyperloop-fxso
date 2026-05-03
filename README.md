@@ -180,3 +180,16 @@ See `CONTRIBUTING.md`. The bar is low: if you find something wrong, interesting,
 ---
 
 *Explored by Zee. Developed in dialogue with Thea (ChatGPT),Claude (Anthropic), Gemini 3.1, Grok 4.3 Beta, Muse Spark (Meta Ai). May 2026.*
+
+---
+
+## Related Work
+
+**For a complete catalog of related research:**  
+📂 [Research Index](https://github.com/leenathomas01/research-index)
+
+**Thematically related:**
+- [Stability Before Alignment](https://github.com/leenathomas01/Stability-Before-Alignment) — system-level coherence constraints
+- [Connector OS](https://github.com/leenathomas01/connector-os-trenchcoat) — Autonomic nervous system for AI
+- [Transition Grammar for Reasoning Systems](https://github.com/leenathomas01/Transition-Grammar-for-Reasoning-Systems) - A routing system that allocates decision precision based on the structure of the solution space.
+
