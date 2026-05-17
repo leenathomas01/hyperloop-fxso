@@ -3007,6 +3007,200 @@ if __name__ == "__main__":
 
     
 ---
+## le me voice over : several chaos later
+  
+Understood. Thank you for the clear, grounded feedback.
+The distinction between geometry preservation and chronology preservation is now the central scientific question. The ablation matrix already hints at it; we need to make it explicit.
+Updated Core Engine + Isolation Sweep
+Here is the ready-to-run version with proper mechanism separation:
+
+import numpy as np
+import matplotlib.pyplot as plt
+from transformers import AutoTokenizer, AutoModel
+import torch
+import os
+from difflib import SequenceMatcher
+
+tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+embedder = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+embedder.eval()
+
+def run_core_engine(input_text, cfg, seed=42):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    # Embedding
+    tokens = tokenizer(input_text, return_tensors="pt", truncation=True, max_length=512)
+    with torch.no_grad():
+        outputs = embedder(**tokens)
+        token_embs = outputs.last_hidden_state[0].numpy()
+    token_texts = tokenizer.convert_ids_to_tokens(tokenizer.encode(input_text))
+
+    N = cfg.get("N_agents", 720)
+    payload = np.zeros((N, token_embs.shape[1]))
+    num_tokens = len(token_embs)
+    for i in range(N):
+        token_idx = min(int(i * num_tokens / N), num_tokens - 1)
+        payload[i] = token_embs[token_idx]
+
+    token_embs_init = payload.copy()
+
+    # Ordered geometry
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
+    radii = 1.2 + 0.08 + 0.04 * np.random.rand(N)
+    X = radii * np.cos(angles)
+    Y = radii * np.sin(angles)
+
+    total_rotation = 0.0
+
+    for step in range(cfg.get("steps", 650)):
+        dx = X[:, np.newaxis] - X[np.newaxis, :]
+        dy = Y[:, np.newaxis] - Y[np.newaxis, :]
+        dist = np.sqrt(dx**2 + dy**2) + 1e-8
+
+        fx = np.zeros(N)
+        fy = np.zeros(N)
+
+        # 1. Spatial forces (Mexican Hat)
+        if cfg.get("enable_physics", True):
+            f_attract = np.exp(-0.65 * dist)
+            f_repel = 0.35 * np.exp(-0.22 * (dist - 0.85)**2)
+            force_mag = f_attract - f_repel
+            np.fill_diagonal(force_mag, 0)
+            fx += np.sum(force_mag * (dx / dist), axis=1) / N
+            fy += np.sum(force_mag * (dy / dist), axis=1) / N
+
+        # Uniform rotation
+        current_angles = np.arctan2(Y, X)
+        current_r = np.sqrt(X**2 + Y**2 + 1e-8)
+        new_angles = current_angles + cfg.get("rotation_speed", -0.034)
+        X = current_r * np.cos(new_angles)
+        Y = current_r * np.sin(new_angles)
+        total_rotation += cfg.get("rotation_speed", -0.034)
+
+        # 2. Kinetic kicks (isolated)
+        if cfg.get("enable_physics", True):
+            kick_scale = cfg.get("kick_scale", 1.0)
+            progress = step / cfg.get("steps", 650)
+            kick = kick_scale * 0.022 * (1.0 - progress) if cfg.get("cooling", True) else kick_scale * 0.022
+
+            local_density = np.sum(dist < 0.17, axis=1)
+            crowded = local_density > 3.8
+            phase_kick = kick * (local_density - 3.8) / N
+            noise_dir = np.random.choice([-1, 1], size=N)
+
+            fx += crowded * phase_kick * noise_dir * (-np.sin(new_angles))
+            fy += crowded * phase_kick * noise_dir * (np.cos(new_angles))
+
+            # Radial confinement
+            radial_force = 0.22 * (1.38 - current_r)
+            fx += radial_force * (X / current_r)
+            fy += radial_force * (Y / current_r)
+
+        X += fx * 0.86
+        Y += fy * 0.86
+
+        # Diffusion + anchoring
+        if cfg.get("enable_diffusion", True):
+            influence = np.exp(-dist / 0.14)
+            np.fill_diagonal(influence, 0)
+            influence /= (influence.sum(axis=1, keepdims=True) + 1e-8)
+            diffused = influence @ payload
+            payload = (1.0 - cfg.get("gamma", 0.85)) * (0.96 * payload + 0.04 * diffused) + cfg.get("gamma", 0.85) * token_embs_init
+
+    # Decoder (Gaussian + residual)
+    shift = total_rotation % (2 * np.pi)
+    adjusted_angles = (np.arctan2(Y, X) - shift - 0.14) % (2 * np.pi)
+
+    num_bins = max(12, len(token_texts) - 4)
+    query_angles = np.linspace(0, 2 * np.pi, num_bins, endpoint=False)
+
+    raw_tokens = []
+    last_idx = -1
+    global_mean = np.mean(token_embs, axis=0)
+    centered_tokens = token_embs - global_mean
+
+    for q_angle in query_angles:
+        angle_diff = np.minimum(np.abs(adjusted_angles - q_angle), 2*np.pi - np.abs(adjusted_angles - q_angle))
+        weights = np.exp(-(angle_diff ** 2) / (2 * 0.09**2))
+        weights /= (weights.sum() + 1e-8)
+
+        smoothed = weights @ payload
+        sims = (smoothed - global_mean) @ centered_tokens.T if cfg.get("enable_residual", True) else smoothed @ token_embs.T
+
+        if last_idx != -1:
+            sims[last_idx] *= 0.15
+        top_idx = np.argmax(sims)
+        last_idx = top_idx
+        raw_tokens.append(token_texts[top_idx])
+
+    # Subtoken healing
+    healed = []
+    for tok in raw_tokens:
+        if tok in ["[CLS]", "[SEP]", ""]: continue
+        if tok.startswith("##") and healed:
+            healed[-1] += tok[2:]
+        elif tok.startswith("Ġ"):
+            healed.append(tok[1:])
+        else:
+            healed.append(tok)
+
+    sequence_out = " ".join(healed).strip()
+
+    r = np.sqrt(X**2 + Y**2)
+    return {
+        "thickness": float(np.std(r - 1.2)),
+        "v_circ": float(1.0 - np.abs(np.mean(np.exp(1j * np.arctan2(Y, X))))),
+        "consensus": float(1.0 - np.mean(np.std(payload, axis=0))),
+        "sequence": sequence_out
+    }
+
+
+# ==============================================================================
+# MECHANISM ISOLATION SWEEP
+# ==============================================================================
+def run_isolation_sweep():
+    text = "The capital of France is Paris. It is known for the Eiffel Tower, world-class cuisine, and its rich history."
+
+    variants = [
+        ("Full Fluid",          {"enable_physics": True,  "enable_diffusion": True,  "enable_residual": True,  "kick_scale": 1.0}),
+        ("No Kicks",            {"enable_physics": True,  "enable_diffusion": True,  "enable_residual": True,  "kick_scale": 0.0}),
+        ("No Attraction/Repel", {"enable_physics": False, "enable_diffusion": True,  "enable_residual": True,  "kick_scale": 1.0}),
+        ("No Anchoring",        {"enable_physics": True,  "enable_diffusion": False, "enable_residual": True,  "kick_scale": 1.0}),
+        ("Crystalline",         {"enable_physics": False, "enable_diffusion": False, "enable_residual": True,  "kick_scale": 0.0}),
+    ]
+
+    print("\n=== MECHANISM ISOLATION RESULTS ===")
+    print("Variant                    | Thickness | V_circ   | Consensus | Edit Sim | Sequence Preview")
+    print("-" * 95)
+
+    for name, mod in variants:
+        cfg = {"N_agents": 720, "steps": 650, "gamma": 0.85, "rotation_speed": -0.034, **mod}
+        thickness_runs = []
+        v_runs = []
+        c_runs = []
+        edit_runs = []
+        sample = ""
+
+        for s in [42, 1337, 777]:
+            res = run_core_engine(text, cfg, seed=s)
+            thickness_runs.append(res["thickness"])
+            v_runs.append(res["v_circ"])
+            c_runs.append(res["consensus"])
+            edit = SequenceMatcher(None, text.lower(), res["sequence"].lower()).ratio()
+            edit_runs.append(edit)
+            sample = res["sequence"][:70]
+
+        print(f"{name:26} | {np.mean(thickness_runs):.4f}±{np.std(thickness_runs):.4f} | "
+              f"{np.mean(v_runs):.5f}±{np.std(v_runs):.5f} | "
+              f"{np.mean(c_runs):.4f}±{np.std(c_runs):.4f} | "
+              f"{np.mean(edit_runs):.4f} | {sample}...")
+
+    print("\nSweep complete. Look especially at 'No Kicks' vs 'Full Fluid' for chronology impact.")
+
+
+if __name__ == "__main__":
+    run_isolation_sweep()
 
 
     
