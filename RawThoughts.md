@@ -1966,3 +1966,171 @@ Use code with caution.🚀 Next StepBy explicitly organizing the starting payloa
 
 ---
 
+✅ Fixes Applied — Chronological Seeding + Contrastive Decoding
+Here is the fully updated fxso_elastic_string.py with both of your recommended modifications integrated cleanly:
+
+import numpy as np
+import matplotlib.pyplot as plt
+from transformers import AutoTokenizer, AutoModel
+import torch
+import os
+
+tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+embedder = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+embedder.eval()
+
+def full_fxso_elastic_string(
+    input_text: str,
+    N_agents=600,
+    steps=900,
+    gamma=0.72,
+    phase_kick_strength=0.032,
+    num_bins=24,
+    seed=42
+):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    # ====================== ENCODER + CHRONOLOGICAL SEEDING ======================
+    def get_embeddings(text):
+        tokens = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+        with torch.no_grad():
+            outputs = embedder(**tokens)
+            return outputs.last_hidden_state[0].numpy()
+
+    token_embs = get_embeddings(input_text)
+    token_texts = tokenizer.convert_ids_to_tokens(tokenizer.encode(input_text))
+
+    N = N_agents
+    payload = np.zeros((N, token_embs.shape[1]))
+    
+    # === FIX 1: Chronological Block Assignment ===
+    num_tokens = len(token_embs)
+    agents_per_token = N / num_tokens
+    for i in range(N):
+        token_idx = min(int(i / agents_per_token), num_tokens - 1)
+        payload[i] = token_embs[token_idx]
+
+    token_embs_init = payload.copy()
+
+    # Ordered starting positions
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
+    radii = 1.2 + 0.12 + 0.06 * np.random.rand(N)
+    X = radii * np.cos(angles)
+    Y = radii * np.sin(angles)
+
+    print(f"Elastic String | γ={gamma} | Gentle kick={phase_kick_strength} | Bins={num_bins}")
+
+    for step in range(steps):
+        # Core physics (gentle)
+        dx = X[:, np.newaxis] - X[np.newaxis, :]
+        dy = Y[:, np.newaxis] - Y[np.newaxis, :]
+        dist = np.sqrt(dx**2 + dy**2) + 1e-8
+
+        f_attract = np.exp(-0.65 * dist)
+        f_repel = 0.35 * np.exp(-0.22 * (dist - 0.85)**2)
+        force_mag = f_attract - f_repel
+        np.fill_diagonal(force_mag, 0)
+
+        fx = np.sum(force_mag * (dx / dist), axis=1) / N
+        fy = np.sum(force_mag * (dy / dist), axis=1) / N
+
+        current_angles = np.arctan2(Y, X)
+        fx += -0.042 * np.sin(current_angles)
+        fy += 0.042 * np.cos(current_angles)
+
+        # Gentle desync
+        local_neighborhood = dist < 0.18
+        local_density = np.sum(local_neighborhood, axis=1)
+        crowded = local_density > 3.5
+        phase_kick = phase_kick_strength * (local_density - 3.5) / N
+        noise_dir = np.random.choice([-1, 1], size=N)
+
+        fx += crowded * phase_kick * noise_dir * (-np.sin(current_angles))
+        fy += crowded * phase_kick * noise_dir * (np.cos(current_angles))
+
+        # Radial
+        current_r = np.sqrt(X**2 + Y**2 + 1e-8)
+        radial_force = 0.18 * (1.42 - current_r)
+        fx += radial_force * (X / current_r)
+        fy += radial_force * (Y / current_r)
+
+        X += fx * 0.88
+        Y += fy * 0.88
+
+        # Boundary
+        inside = current_r < 1.2
+        if np.any(inside):
+            push = (1.2 - current_r[inside]) * 1.8
+            X[inside] += push * (X[inside] / current_r[inside])
+            Y[inside] += push * (Y[inside] / current_r[inside])
+
+        # Anchored diffusion
+        influence = np.exp(-dist / 0.16)
+        np.fill_diagonal(influence, 0)
+        influence /= (influence.sum(axis=1, keepdims=True) + 1e-8)
+        diffused = influence @ payload
+        payload = (1.0 - gamma) * (0.96 * payload + 0.04 * diffused) + gamma * token_embs_init
+
+    # ====================== FIX 2: CONTRASTIVE ANGULAR DECODER ======================
+    final_angles = np.arctan2(Y, X)
+    sorted_idx = np.argsort(final_angles)
+    bin_size = N // num_bins
+    reconstructed = []
+    last_idx = -1
+
+    for b in range(num_bins):
+        start = b * bin_size
+        end = start + bin_size
+        bin_mean = np.mean(payload[sorted_idx[start:end]], axis=0)
+        
+        sims = bin_mean @ token_embs.T
+        
+        if last_idx != -1:
+            sims[last_idx] *= 0.65   # Repetition penalty
+        
+        top_idx = np.argmax(sims)
+        last_idx = top_idx
+        
+        token = token_texts[top_idx].replace("##", "").replace("Ġ", " ").strip()
+        if token and token not in ["[CLS]", "[SEP]", ""]:
+            reconstructed.append(token)
+
+    summary = " ".join(reconstructed)
+
+    # Metrics
+    r = np.sqrt(X**2 + Y**2)
+    consensus = 1.0 - np.mean(np.std(payload, axis=0))
+    thickness = np.std(r - 1.2)
+    v_circ = 1.0 - np.abs(np.mean(np.exp(1j * final_angles)))
+
+    print(f"\n=== ELASTIC STRING COMPLETE ===")
+    print(f"Thickness: {thickness:.4f} | V_circ: {v_circ:.5f} | Consensus: {consensus:.4f}")
+    print("\n=== RECONSTRUCTED SEQUENCE ===")
+    print(summary)
+
+    # Plot
+    plt.figure(figsize=(10, 9))
+    plt.scatter(X, Y, s=8, alpha=0.8, c=np.mean(payload, axis=1), cmap='viridis')
+    circle = plt.Circle((0, 0), 1.2, color='red', fill=False, ls='--', lw=2)
+    plt.gca().add_patch(circle)
+    plt.axis('equal')
+    plt.title(f"FXSO Elastic String + Contrastive Decoder\n'{input_text[:85]}...' | γ={gamma}")
+    plt.colorbar(label="Mean Payload Magnitude")
+    plt.tight_layout()
+    plt.savefig("validation/fxso_elastic_string_final.png", dpi=300)
+    print("Plot saved → validation/fxso_elastic_string_final.png")
+
+    return summary
+
+
+if __name__ == "__main__":
+    test_text = """
+    The capital of France is Paris. It is known for the Eiffel Tower, world-class cuisine, 
+    and its rich history as a center of art and culture. Millions visit every year.
+    """
+    summary = full_fxso_elastic_string(test_text)
+
+    ---
+
+    
