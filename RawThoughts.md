@@ -3202,5 +3202,15 @@ def run_isolation_sweep():
 if __name__ == "__main__":
     run_isolation_sweep()
 
+---
+
+## Where we at??
+
+Stage 1 (Done): Binary ablations + multi-seed
+Stage 2 (Next): Mechanism-isolated sweeps (kick, attraction/repel, anchoring γ)
+Stage 3: True multi-axis phase mapping + decoder variants
+Here is a clean, focused mechanism-isolation sweep you can run immediately. It treats the three major levers separately instead of collapsing them into one physics_strength.| # Add this to your research suite
+
+
 
     
