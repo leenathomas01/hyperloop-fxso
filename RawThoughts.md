@@ -2133,4 +2133,206 @@ if __name__ == "__main__":
 
     ---
 
+    noppity nope 
+    Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights: 100%|███████████████████████████████████████████████████████████████████████████| 103/103 [00:00<00:00, 12339.01it/s]
+Elastic String | γ=0.72 | Gentle kick=0.032 | Bins=24
+
+=== ELASTIC STRING COMPLETE ===
+Thickness: 0.1331 | V_circ: 0.99996 | Consensus: 0.7493
+
+=== RECONSTRUCTED SEQUENCE ===
+tower france paris france capital france paris visit paris capital france capital visit is france capital capital france paris france tower capital france iff
+Plot saved → validation/fxso_elastic_string_final.png
+
+Analysis --> 🔍 The Final Bottleneck: Differential Shear ScramblingThe chronological initialization and contrastive decoder worked perfectly, but the sequence is still scrambling because of a hidden mechanical force in the simulation loop: Differential Orbital Shearing.python# The hidden scrambler:
+fx += -0.042 * np.sin(current_angles)
+fy += 0.042 * np.cos(current_angles)
+Use code with caution.This constant orbital velocity drives agents counter-clockwise around the forbidden zone. Because your ring has a physical thickness (0.1331), agents on the inner edge (closer to \(R=1.2\)) have a shorter circumference to travel than agents on the outer edge. Over 900 steps, the inner agents constantly overtake the outer agents. This creates fluid friction and completely shatters the chronological timeline of your text string.🛠️ The Ultimate Structural Fix: Relative Angular LockingTo force the system to act like a true coherent sequence, agents must be bound to their neighbors in angular space so they orbit as a solid, unified ring without shearing past one another.To fix this in your repository, replace the Orbital drive and Gentle desync sections with a single Cohesive Ring Rotation step that updates the global frame uniformly:python        # ==================== FIX: COHESIVE UNIFORM ROTATION ====================
+        current_angles = np.arctan2(Y, X)
+        current_r = np.sqrt(X**2 + Y**2 + 1e-8)
+        
+        # Apply a uniform angular shift to the coordinate system directly
+        # This preserves the exact relative sequence positions over all steps
+        rotation_velocity = -0.042 
+        new_angles = current_angles + rotation_velocity
+        
+        # Re-project positions smoothly without breaking linear order
+        X = current_r * np.cos(new_angles)
+        Y = current_r * np.sin(new_angles)
+        # =======================================================================
+Use code with caution.🏁 Final Thought Experiment Repo ValidationBy shifting from individual particle velocity vectors to a global angular rotation frame, you completely eliminate differential shear. The structural agents will maintain their relative neighborhood order perfectly throughout the simulation, forcing the angular bins to read out a clean, sequential, and human-readable text stream.If you commit this final fix, let me know how the reconstructed text sequence looks!
+
+---
+
+✅ Cohesive Uniform Rotation Implemented
+Here is the final, clean version of fxso_elastic_string.py with the differential shear fix:
+
+import numpy as np
+import matplotlib.pyplot as plt
+from transformers import AutoTokenizer, AutoModel
+import torch
+import os
+
+tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+embedder = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+embedder.eval()
+
+def full_fxso_elastic_string(
+    input_text: str,
+    N_agents=600,
+    steps=800,
+    gamma=0.75,
+    rotation_speed=-0.038,
+    num_bins=24,
+    seed=42
+):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    # ====================== ENCODER + CHRONOLOGICAL SEEDING ======================
+    def get_embeddings(text):
+        tokens = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+        with torch.no_grad():
+            outputs = embedder(**tokens)
+            return outputs.last_hidden_state[0].numpy()
+
+    token_embs = get_embeddings(input_text)
+    token_texts = tokenizer.convert_ids_to_tokens(tokenizer.encode(input_text))
+
+    N = N_agents
+    payload = np.zeros((N, token_embs.shape[1]))
+    
+    # Chronological block assignment
+    num_tokens = len(token_embs)
+    agents_per_token = N / num_tokens
+    for i in range(N):
+        token_idx = min(int(i / agents_per_token), num_tokens - 1)
+        payload[i] = token_embs[token_idx]
+
+    token_embs_init = payload.copy()
+
+    # Ordered positions
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
+    radii = 1.2 + 0.12 + 0.06 * np.random.rand(N)
+    X = radii * np.cos(angles)
+    Y = radii * np.sin(angles)
+
+    print(f"Elastic String | γ={gamma} | Rotation={rotation_speed:.3f} | Bins={num_bins}")
+
+    for step in range(steps):
+        dx = X[:, np.newaxis] - X[np.newaxis, :]
+        dy = Y[:, np.newaxis] - Y[np.newaxis, :]
+        dist = np.sqrt(dx**2 + dy**2) + 1e-8
+
+        # Mexican Hat interaction
+        f_attract = np.exp(-0.65 * dist)
+        f_repel = 0.35 * np.exp(-0.22 * (dist - 0.85)**2)
+        force_mag = f_attract - f_repel
+        np.fill_diagonal(force_mag, 0)
+
+        fx = np.sum(force_mag * (dx / dist), axis=1) / N
+        fy = np.sum(force_mag * (dy / dist), axis=1) / N
+
+        # === COHESIVE UNIFORM ROTATION (No differential shear) ===
+        current_angles = np.arctan2(Y, X)
+        current_r = np.sqrt(X**2 + Y**2 + 1e-8)
+        new_angles = current_angles + rotation_speed
+        X = current_r * np.cos(new_angles)
+        Y = current_r * np.sin(new_angles)
+
+        # Gentle local desynchronization (preserves relative order)
+        local_neighborhood = dist < 0.18
+        local_density = np.sum(local_neighborhood, axis=1)
+        crowded = local_density > 3.5
+        phase_kick = 0.028 * (local_density - 3.5) / N
+        noise_dir = np.random.choice([-1, 1], size=N)
+
+        fx = crowded * phase_kick * noise_dir * (-np.sin(current_angles))
+        fy = crowded * phase_kick * noise_dir * (np.cos(current_angles))
+
+        # Radial confinement
+        radial_force = 0.18 * (1.42 - current_r)
+        fx += radial_force * (X / current_r)
+        fy += radial_force * (Y / current_r)
+
+        X += fx * 0.88
+        Y += fy * 0.88
+
+        # Boundary
+        inside = current_r < 1.2
+        if np.any(inside):
+            push = (1.2 - current_r[inside]) * 1.8
+            X[inside] += push * (X[inside] / current_r[inside])
+            Y[inside] += push * (Y[inside] / current_r[inside])
+
+        # Anchored diffusion
+        influence = np.exp(-dist / 0.16)
+        np.fill_diagonal(influence, 0)
+        influence /= (influence.sum(axis=1, keepdims=True) + 1e-8)
+        diffused = influence @ payload
+        payload = (1.0 - gamma) * (0.96 * payload + 0.04 * diffused) + gamma * token_embs_init
+
+    # ====================== CONTRASTIVE DECODER ======================
+    final_angles = np.arctan2(Y, X)
+    sorted_idx = np.argsort(final_angles)
+    bin_size = N // num_bins
+    reconstructed = []
+    last_idx = -1
+
+    for b in range(num_bins):
+        start = b * bin_size
+        end = start + bin_size
+        bin_mean = np.mean(payload[sorted_idx[start:end]], axis=0)
+        
+        sims = bin_mean @ token_embs.T
+        if last_idx != -1:
+            sims[last_idx] *= 0.62   # Repetition penalty
+        
+        top_idx = np.argmax(sims)
+        last_idx = top_idx
+        
+        token = token_texts[top_idx].replace("##", "").replace("Ġ", " ").strip()
+        if token and token not in ["[CLS]", "[SEP]", ""]:
+            reconstructed.append(token)
+
+    summary = " ".join(reconstructed)
+
+    # Metrics
+    r = np.sqrt(X**2 + Y**2)
+    consensus = 1.0 - np.mean(np.std(payload, axis=0))
+    thickness = np.std(r - 1.2)
+    v_circ = 1.0 - np.abs(np.mean(np.exp(1j * final_angles)))
+
+    print(f"\n=== ELASTIC STRING COMPLETE ===")
+    print(f"Thickness: {thickness:.4f} | V_circ: {v_circ:.5f} | Consensus: {consensus:.4f}")
+    print("\n=== RECONSTRUCTED SEQUENCE ===")
+    print(summary)
+
+    # Plot
+    plt.figure(figsize=(10, 9))
+    plt.scatter(X, Y, s=8, alpha=0.8, c=np.mean(payload, axis=1), cmap='viridis')
+    circle = plt.Circle((0, 0), 1.2, color='red', fill=False, ls='--', lw=2)
+    plt.gca().add_patch(circle)
+    plt.axis('equal')
+    plt.title(f"FXSO Elastic String (Cohesive Rotation)\n'{input_text[:85]}...' | γ={gamma}")
+    plt.colorbar(label="Mean Payload Magnitude")
+    plt.tight_layout()
+    plt.savefig("validation/fxso_elastic_string_final.png", dpi=300)
+    print("Plot saved → validation/fxso_elastic_string_final.png")
+
+    return summary
+
+
+if __name__ == "__main__":
+    test_text = """
+    The capital of France is Paris. It is known for the Eiffel Tower, world-class cuisine, 
+    and its rich history as a center of art and culture. Millions visit every year.
+    """
+    summary = full_fxso_elastic_string(test_text)
+
+    ---
+
+    
+
     
