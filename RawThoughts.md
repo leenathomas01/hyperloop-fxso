@@ -768,3 +768,147 @@ If you run this code, let me know:
 * If you want to integrate this dynamic into the Early Exit optimization layer of your conceptual model.
 
 ---
+<img width="3570" height="1466" alt="fxso_elastic_validation" src="https://github.com/user-attachments/assets/09bc96a4-103e-4273-bab6-e44275f55226" />
+
+---
+
+Gem--> Analysis of the Elastic Field Regime ResultsThe simulation successfully achieved the target Elastic Field criteria for angular distribution (\(V_{circ} = 0.9931\)), but it triggered an unintended structural trade-off: radial explosion.Instead of a thin, highly concentrated elastic ring, the phase desynchronization mechanics caused the agents to completely scatter outward into a massive, diffuse 2D cloud.Key Findings from the PlotAngular Success (\(V_{circ} \to 1.0\)): The right-hand plot shows excellent angular uniformity. Even after the noise shock (step 300) and the rotation shock (step 600), the system rapidly restores its high circular variance. The phase-locked "beads" have been entirely eliminated.Radial Collapse (\(\sigma_{radius} = 4.0804\)): The left-hand plot reveals that the core topological feature—the tight annular manifold class—has dissolved. The thickness blew up from your previous benchmark of 0.115 to a diffuse 4.0804. The red forbidden zone is now a tiny dot inside a giant cloud of agents expanding past \(R = 15\).Why Did the System Dissolve Radially?Even though the desynchronization kick was programmed to be strictly tangential (-np.sin(current_angles) and np.cos(current_angles)), two mechanical factors caused this expansion:Centrifugal Splattering: Large tangential kicks impart significant angular velocity to crowded agents. Without a strong radial binding force, this kinetic energy flings agents outward away from the forbidden zone boundary.Unbounded Multi-Scale Repulsion: The mid-range repulsion from the Mexican Hat kernel, combined with high local density kicks, created a chain reaction of outward pushing forces.Next Optimization StepsTo achieve a true Elastic Ring (holding both \(V_{circ} \approx 1.0\) and \(\sigma_{radius} \leq 0.2\)), we need to add a explicit radial binding tension or normalize the kinetic temperature of the phase kicks.Would you like to try fixing this by introducing a global potential well (radial restoring force) to keep them pinned to a target manifold radius, or should we dampen the desynchronization strength based on radial distance?
+
+---
+Gr-->
+
+```
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def run_elastic_experiment(
+    N=500,
+    steps=1200,
+    forbidden_radius=1.2,
+    seed=42
+):
+    np.random.seed(seed)
+    
+    # Initial positions - slightly outside forbidden zone
+    radii = forbidden_radius + 0.12 + 0.06 * np.random.rand(N)
+    angles = np.random.rand(N) * 2 * np.pi
+    X = radii * np.cos(angles)
+    Y = radii * np.sin(angles)
+   
+    history_thickness = []
+    history_v_circ = []
+   
+    os.makedirs("validation", exist_ok=True)
+    print("Running Stabilized FXSO Elastic Field Simulation...")
+
+    for step in range(steps):
+        # Pairwise distances
+        dx = X[:, np.newaxis] - X[np.newaxis, :]
+        dy = Y[:, np.newaxis] - Y[np.newaxis, :]
+        dist = np.sqrt(dx**2 + dy**2) + 1e-8
+
+        # Mexican Hat interaction
+        f_attract = np.exp(-0.65 * dist)
+        f_repel = 0.35 * np.exp(-0.22 * (dist - 0.85)**2)
+        force_mag = f_attract - f_repel
+        np.fill_diagonal(force_mag, 0)
+
+        fx = np.sum(force_mag * (dx / dist), axis=1) / N
+        fy = np.sum(force_mag * (dy / dist), axis=1) / N
+
+        # Orbital drive
+        current_angles = np.arctan2(Y, X)
+        fx += -0.065 * np.sin(current_angles)
+        fy += 0.065 * np.cos(current_angles)
+
+        # Adaptive Phase Desynchronization (tangential only)
+        local_neighborhood = dist < 0.18
+        local_density = np.sum(local_neighborhood, axis=1)
+        crowded_mask = local_density > 3.5
+        phase_kick = 0.18 * (local_density - 3.5) / N
+        noise_dir = np.random.choice([-1, 1], size=N)
+
+        fx += crowded_mask * phase_kick * noise_dir * (-np.sin(current_angles))
+        fy += crowded_mask * phase_kick * noise_dir * (np.cos(current_angles))
+
+        # === Strong but balanced radial restoring force ===
+        current_r = np.sqrt(X**2 + Y**2 + 1e-8)
+        target_r = forbidden_radius + 0.22
+        radial_force = 0.18 * (target_r - current_r)
+        fx += radial_force * (X / current_r)
+        fy += radial_force * (Y / current_r)
+
+        # Gentle velocity damping (controls kinetic temperature)
+        X += fx * 0.85
+        Y += fy * 0.85
+
+        # Hard boundary reflection
+        inside = current_r < forbidden_radius
+        if np.any(inside):
+            push = (forbidden_radius - current_r[inside]) * 1.6
+            X[inside] += push * (X[inside] / current_r[inside])
+            Y[inside] += push * (Y[inside] / current_r[inside])
+
+        # Shocks
+        if step == 400:
+            X += np.random.normal(0, 0.22, N)
+            Y += np.random.normal(0, 0.22, N)
+        elif step == 800:
+            X_old, Y_old = X.copy(), Y.copy()
+            X = -Y_old
+            Y = X_old
+
+        # Metrics
+        updated_r = np.sqrt(X**2 + Y**2)
+        thickness = np.std(updated_r - forbidden_radius)
+        history_thickness.append(thickness)
+
+        mean_complex = np.mean(np.exp(1j * np.arctan2(Y, X)))
+        v_circ = 1.0 - np.abs(mean_complex)
+        history_v_circ.append(v_circ)
+
+    # Final report
+    print(f"\n=== FINAL RESULTS ===")
+    print(f"Thickness (σ_radius): {history_thickness[-1]:.4f}")
+    print(f"V_circ:               {history_v_circ[-1]:.4f}")
+    print(f"Average late V_circ:  {np.mean(history_v_circ[-200:]):.4f}")
+
+    # Plot
+    plt.figure(figsize=(12, 5))
+    
+    plt.subplot(1, 2, 1)
+    plt.scatter(X, Y, s=4, alpha=0.8, color='darkviolet')
+    circle = plt.Circle((0, 0), forbidden_radius, color='red', fill=False, ls='--', lw=2)
+    plt.gca().add_patch(circle)
+    plt.axis('equal')
+    plt.title("Final Agent Positions - Elastic Ring")
+    plt.grid(True, alpha=0.3)
+
+    plt.subplot(1, 2, 2)
+    plt.plot(history_v_circ, label="V_circ", color='blue', lw=2)
+    plt.axvline(400, color='gray', ls=':', label='Noise Shock')
+    plt.axvline(800, color='gray', ls='--', label='Rotation Shock')
+    plt.xlabel("Simulation Steps")
+    plt.ylabel("Circular Variance")
+    plt.title("Angular Uniformity Over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig("validation/fxso_elastic_stable.png", dpi=300, bbox_inches='tight')
+    print("Plot saved → validation/fxso_elastic_stable.png")
+    
+    return history_thickness[-1], history_v_circ[-1]
+
+
+if __name__ == "__main__":
+    print("="*70)
+    print("FXSO Elastic Field Regime - STABILIZED")
+    print("="*70)
+    run_elastic_experiment()
+```
+---
+
+
+
