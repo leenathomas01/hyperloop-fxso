@@ -1748,3 +1748,170 @@ if __name__ == "__main__":
     summary = full_fxso_pipeline_anchored(test_text, gamma=0.68, steps=1000)
 
     ---
+yeah no. good night
+
+🗺️ The Scrambling Protocol: Why it OscillatesDropping the consensus to 0.7492 and seeing that speckled, high-variance ring is a massive win for the physics engine. You successfully stopped the global information wash.However, your reconstructed sequence is still jumping between a few high-frequency words (capital, is, france). The reason for this oscillation reveals a fundamental architectural choice in your repository: Your agents are behaving like a fluid gas rather than a coherent topological string.🔍 The Root Cause: Spatial ScramblingLook at how the agents are initialized and driven over 1200 steps:Random Spatial Assignment: At step 0, agents are assigned payloads sequentially (i % len(token_embs)), but their starting positions (angles) are completely randomized around the circle. Token 1 ("The") and Token 2 ("capital") start on completely opposite sides of the ring.Kinetic Scrambling: Over 1200 steps, your constant orbital drive (0.065) and chaotic tangential desynchronization kicks continuously shuffle and pass agents past one another.The "Bag of Words" Bin: Because the fluid is completely mixed, every single angular bin contains a random, roughly equal distribution of all tokens. When you take the mean of a bin, you are just calculating a global average of the entire text. The decoder picks france or capital repeatedly because those specific embeddings happen to be the geometric "hubs" (dominant vectors) of that text chunk.🛠️ How to Realize a True Topological SequenceIf your goal is for spatial position around the ring to directly map to the sequential order of the text, you must treat the field as an Elastic String of Pearls rather than a fluid gas.Here are the structural changes needed in your script to lock in sequence order:1. Ordered InitializationForce the tokens to start in perfect chronological order around the ring:python# Replace random angles with ordered linear spacing
+angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
+Use code with caution.2. Suppress Kinetic Shuffling (Lower the Temperature)The current phase desynchronization is too violent for a sequence tracker; it's causing agents to leapfrog past each other. Turn down the fluid dynamics so they push against each other without breaking their relative order:python# Dial down the shuffling parameters to maintain sequence topology
+phase_kick = 0.02 * (local_density - 3.5) / N  # Reduced from 0.18
+Use code with caution.🧠 The Alternative: Embrace the "Global Context Memory"If you want the fluid to mix completely, then this oscillation proves that FXSO shouldn't be decoded with simple angular bins. Instead, a fully-mixed FXSO field acts as a Non-Linear Global Context Memory.To decode a mixed fluid field, you don't look at individual spatial slices. You query the entire stabilized state vector at once using an Attention Cross-Projection layer (like a traditional transformer decoder head looking at an encoder memory bank).Which path aligns closer with your vision for the repo?Should we implement the Ordered String adjustments to get a clean linear text reconstruction?Should we build a proper Attention Query Head to treat the mixed field as a robust global context encoder
+
+---
+okay fine one last run. zzz
+
+---
+
+Path Chosen: Ordered Elastic String (Sequential Topology)
+Here is the final tuned version that treats the ring as an Elastic String of Pearls — tokens start in order and mostly stay in relative sequence while still allowing local elastic interactions.
+
+import numpy as np
+import matplotlib.pyplot as plt
+from transformers import AutoTokenizer, AutoModel
+import torch
+import os
+
+tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+embedder = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+embedder.eval()
+
+def full_fxso_elastic_string(
+    input_text: str,
+    N_agents=600,
+    steps=800,
+    gamma=0.72,
+    phase_kick_strength=0.035,   # Much gentler shuffling
+    num_bins=20,
+    seed=42
+):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    # ====================== ENCODER ======================
+    def get_embeddings(text):
+        tokens = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+        with torch.no_grad():
+            outputs = embedder(**tokens)
+            return outputs.last_hidden_state[0].numpy()
+
+    token_embs = get_embeddings(input_text)
+    token_texts = tokenizer.convert_ids_to_tokens(tokenizer.encode(input_text))
+
+    N = N_agents
+    payload = np.zeros((N, token_embs.shape[1]))
+    for i in range(N):
+        payload[i] = token_embs[i % len(token_embs)]
+
+    token_embs_init = payload.copy()
+
+    # === ORDERED INITIALIZATION (Critical!) ===
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
+    radii = 1.2 + 0.12 + 0.06 * np.random.rand(N)
+    X = radii * np.cos(angles)
+    Y = radii * np.sin(angles)
+
+    print(f"Elastic String Mode | γ={gamma} | Gentle kicks={phase_kick_strength}")
+
+    for step in range(steps):
+        dx = X[:, np.newaxis] - X[np.newaxis, :]
+        dy = Y[:, np.newaxis] - Y[np.newaxis, :]
+        dist = np.sqrt(dx**2 + dy**2) + 1e-8
+
+        # Physics
+        f_attract = np.exp(-0.65 * dist)
+        f_repel = 0.35 * np.exp(-0.22 * (dist - 0.85)**2)
+        force_mag = f_attract - f_repel
+        np.fill_diagonal(force_mag, 0)
+
+        fx = np.sum(force_mag * (dx / dist), axis=1) / N
+        fy = np.sum(force_mag * (dy / dist), axis=1) / N
+
+        current_angles = np.arctan2(Y, X)
+        fx += -0.045 * np.sin(current_angles)   # Mild orbital
+        fy += 0.045 * np.cos(current_angles)
+
+        # Gentle desynchronization
+        local_neighborhood = dist < 0.18
+        local_density = np.sum(local_neighborhood, axis=1)
+        crowded = local_density > 3.5
+        phase_kick = phase_kick_strength * (local_density - 3.5) / N
+        noise_dir = np.random.choice([-1, 1], size=N)
+
+        fx += crowded * phase_kick * noise_dir * (-np.sin(current_angles))
+        fy += crowded * phase_kick * noise_dir * (np.cos(current_angles))
+
+        # Radial confinement
+        current_r = np.sqrt(X**2 + Y**2 + 1e-8)
+        radial_force = 0.18 * (1.42 - current_r)
+        fx += radial_force * (X / current_r)
+        fy += radial_force * (Y / current_r)
+
+        X += fx * 0.88
+        Y += fy * 0.88
+
+        # Boundary
+        inside = current_r < 1.2
+        if np.any(inside):
+            push = (1.2 - current_r[inside]) * 1.8
+            X[inside] += push * (X[inside] / current_r[inside])
+            Y[inside] += push * (Y[inside] / current_r[inside])
+
+        # Anchored diffusion
+        influence = np.exp(-dist / 0.16)
+        np.fill_diagonal(influence, 0)
+        influence /= (influence.sum(axis=1, keepdims=True) + 1e-8)
+        diffused = influence @ payload
+        payload = (1.0 - gamma) * (0.96 * payload + 0.04 * diffused) + gamma * token_embs_init
+
+    # ====================== ANGULAR DECODER ======================
+    final_angles = np.arctan2(Y, X)
+    sorted_idx = np.argsort(final_angles)
+    bin_size = N // num_bins
+    reconstructed = []
+
+    for b in range(num_bins):
+        start = b * bin_size
+        end = start + bin_size
+        bin_mean = np.mean(payload[sorted_idx[start:end]], axis=0)
+        sims = bin_mean @ token_embs.T
+        top_idx = np.argmax(sims)
+        token = token_texts[top_idx].replace("##", "").replace("Ġ", " ").strip()
+        if token and token not in ["[CLS]", "[SEP]"]:
+            reconstructed.append(token)
+
+    summary = " ".join(reconstructed)
+
+    # Metrics
+    r = np.sqrt(X**2 + Y**2)
+    consensus = 1.0 - np.mean(np.std(payload, axis=0))
+    thickness = np.std(r - 1.2)
+    v_circ = 1.0 - np.abs(np.mean(np.exp(1j * final_angles)))
+
+    print(f"\n=== ELASTIC STRING PIPELINE COMPLETE ===")
+    print(f"Thickness: {thickness:.4f} | V_circ: {v_circ:.5f} | Consensus: {consensus:.4f}")
+    print("\n=== RECONSTRUCTED SEQUENCE ===")
+    print(summary)
+
+    # Plot
+    plt.figure(figsize=(10, 9))
+    plt.scatter(X, Y, s=8, alpha=0.8, c=np.mean(payload, axis=1), cmap='viridis')
+    circle = plt.Circle((0, 0), 1.2, color='red', fill=False, ls='--', lw=2)
+    plt.gca().add_patch(circle)
+    plt.axis('equal')
+    plt.title(f"FXSO Elastic String | γ={gamma}\n'{input_text[:85]}...'")
+    plt.colorbar(label="Mean Payload Magnitude")
+    plt.tight_layout()
+    plt.savefig("validation/fxso_elastic_string.png", dpi=300)
+
+    return summary
+
+
+if __name__ == "__main__":
+    test_text = """
+    The capital of France is Paris. It is known for the Eiffel Tower, world-class cuisine, 
+    and its rich history as a center of art and culture. Millions visit every year.
+    """
+    summary = full_fxso_elastic_string(test_text)
+
+    ---
+
+    
